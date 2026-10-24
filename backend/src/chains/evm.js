@@ -184,6 +184,8 @@ export function createEvmAdapter(c) {
      */
     async discover(from, head) {
       const to = Math.min(head, from + 1000);
+      // prepaid with no contract deployed: no approvals or contract events to look for
+      if (!billing) return { events: [], last: to };
       const [approvals, enrolled, changed, cancelled] = await Promise.all([
         token.queryFilter(token.filters.Approval(null, c.contract), from + 1, to),
         billing.queryFilter(billing.filters.Enrolled(), from + 1, to),

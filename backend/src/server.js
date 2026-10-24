@@ -12,6 +12,9 @@ import { notify, code as tgCode, link as tgLink, esc as tgEsc, publicTelegram, s
 import { mountBilling, BillingError, resolve } from './billing.js';
 import { startTelegramBot, botSettings, saveBotSettings } from './telegramBot.js';
 
+// A failed background RPC call (busy public node) must never take the whole server down.
+process.on('unhandledRejection', (e) => console.error('[server] background error:', e?.shortMessage || e?.message || e));
+
 const app = express();
 app.disable('x-powered-by');
 // How many proxies sit in front of the server (Caddy / Nginx / Render = 1).
