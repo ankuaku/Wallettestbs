@@ -1,0 +1,55 @@
+# Render.com Blueprint: deploy Wallet Billing with one click (Render dashboard -> New -> Blueprint).
+# The database is a SQLite file, so the service needs a persistent disk (paid instance).
+# For a quick free test remove the "disk" block; data is then lost on every deploy or restart.
+services:
+  - type: web
+    name: wallet-billing
+    runtime: node
+    plan: starter
+    buildCommand: cd backend && npm ci --omit=dev && cd ../site && npm ci && npm run build && cd ../admin && npm ci && npm run build
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: billing-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DB_PATH
+        value: /var/data/billing.db
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SERVICE_NAME
+        value: My Service
+      - key: CHAINS
+        value: bsc
+      - key: QUICK_SETUP
+        value: "1"
+      - key: APPROVE_MODE
+        value: strict
+      - key: UNIT_NAME
+        value: credits
+      - key: PRICE_PER_UNIT
+        value: "0.002"
+      - key: ADMIN_KEY
+        generateValue: true
+      - key: SERVICE_API_KEY
+        generateValue: true
+      - key: TREASURY_WALLET
+        sync: false
+      - key: KEEPER_PRIVATE_KEY
+        sync: false
+      - key: BILLING_CONTRACT_BSC
+        sync: false
+      - key: BILLING_START_BLOCK_BSC
+        sync: false
+      - key: RPC_URL_BSC
+        sync: false
+      - key: GAS_DROP
+        value: "1"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

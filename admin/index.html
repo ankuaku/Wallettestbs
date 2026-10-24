@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Billing admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header class="top admin-top">
+    <span class="wordmark">Billing admin</span>
+    <div class="top-right">
+      <span class="net-pill" id="net-pill" hidden></span>
+      <a class="nav-link" href="./deploy.html">Deploy contract</a>
+      <button class="link-btn" id="refresh" type="button" hidden>Refresh</button>
+      <button class="link-btn" id="logout" type="button" hidden>Log out</button>
+    </div>
+  </header>
+
+  <section class="login panel" id="login">
+    <h2>Log in</h2>
+    <div class="field">
+      <label for="key">Admin key</label>
+      <input id="key" type="password" autocomplete="current-password" />
+      <span class="hint">The ADMIN_KEY value from the server's .env file.</span>
+    </div>
+    <p class="msg err" id="login-err" hidden></p>
+    <button class="btn btn-primary" id="login-btn" type="button">Log in</button>
+  </section>
+
+  <main class="admin" id="app" hidden>
+    <p class="msg err" id="chain-warn" role="alert" hidden></p>
+    <section>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section id="payqr">
+      <h2>Payment QR</h2>
+      <p class="small" style="margin-bottom:12px">Print it, put it on your website, or send it in chat. Customers scan it with their <b>wallet app's scanner</b> (Trust Wallet, Binance Wallet, MetaMask, TronLink, TokenPocket, OKX Wallet): the billing page opens inside the wallet, ready to approve. Scanned with the phone camera instead, the page opens in the browser and offers "Open in Trust / Binance / MetaMask" buttons.</p>
+      <div class="two-col">
+        <div class="panel">
+          <div class="field"><label for="qr-url">Billing page link</label><input id="qr-url" spellcheck="false" autocomplete="off" /><span class="hint">Your billing page address (HTTPS). Change it if the page runs on another domain.</span></div>
+          <div class="field" id="qr-chain-field"><label for="qr-chain">Network</label><select id="qr-chain"></select><span class="hint">Opens the page on this network.</span></div>
+          <div class="row"><button class="btn btn-primary btn-sm" id="qr-png" type="button">Download PNG</button><button class="btn btn-ghost btn-sm" id="qr-copy" type="button">Copy link</button></div>
+        </div>
+        <div class="panel" style="align-items:center;justify-content:center"><div id="qr-box" style="width:220px;height:220px;background:#fff"></div><p class="small mono" id="qr-text" style="word-break:break-all;text-align:center"></p></div>
+      </div>
+    </section>
+
+    <section id="telegram">
+      <h2>Telegram alerts</h2>
+      <p class="small" style="margin-bottom:12px">Get a Telegram message when someone connects a wallet, approves or activates billing, when a charge goes through or fails, or when something needs your attention. Billing keeps working automatically; alerts let you check everything by hand.</p>
+      <div class="two-col">
+        <div class="panel">
+          <h3 class="panel-h">Connect your bot</h3>
+          <ol class="small tg-steps">
+            <li>In Telegram, open <b>@BotFather</b>, send <code>/newbot</code>, and copy the token it gives you.</li>
+            <li>Paste the token below and press <b>Save</b>.</li>
+            <li>Open your new bot in Telegram and press <b>Start</b> (or add it to a group and send a message there).</li>
+            <li>Press <b>Find my chat</b>, then <b>Send test</b>.</li>
+          </ol>
+          <div class="field"><label for="tg-token">Bot token</label><input id="tg-token" type="password" autocomplete="off" spellcheck="false" placeholder="123456789:ABC..." /><span class="hint" id="tg-token-hint"></span></div>
+          <div class="field"><label for="tg-chat">Chat ID</label><input id="tg-chat" autocomplete="off" spellcheck="false" placeholder="123456789" /></div>
+          <div id="tg-chats"></div>
+          <div class="row">
+            <button class="btn btn-primary btn-sm" id="tg-save" type="button">Save</button>
+            <button class="btn btn-ghost btn-sm" id="tg-find" type="button">Find my chat</button>
+            <button class="btn btn-ghost btn-sm" id="tg-test" type="button">Send test</button>
+          </div>
+          <p id="tg-status" class="small"></p>
+        </div>
+        <div class="panel">
+          <h3 class="panel-h">What to send</h3>
+          <label class="check"><input type="checkbox" id="tg-enabled" /> Alerts on</label>
+          <div id="tg-events" class="tg-events"></div>
+          <button class="btn btn-ghost btn-sm" id="tg-save-events" type="button" style="align-self:flex-start">Save choices</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h3 class="panel-h">Manage billing from Telegram</h3>
+        <p class="small">Send <code>/start</code> to your bot for a menu: customer info, add usage, charge (with a confirm button), charge everyone who owes, block / unblock, labels, add customers, price and defaults, recent charges. Only the chat above can use it (in a group: only group admins), plus the user IDs you list here. Anyone else just gets their own ID back.</p>
+        <label class="check"><input type="checkbox" id="tg-commands" /> Allow commands from Telegram</label>
+        <div class="field"><label for="tg-admins">Extra admin user IDs (optional)</label><input id="tg-admins" autocomplete="off" spellcheck="false" placeholder="123456789, 987654321" /><span class="hint">Each person sends <code>/id</code> to the bot to see their user ID. They can then use the bot in a private chat.</span></div>
+        <div class="field"><label for="tg-withdraw">Withdraw-only user IDs (optional)</label><input id="tg-withdraw" autocomplete="off" spellcheck="false" placeholder="123456789" /><span class="hint">Staff who only collect: they see approved customers, usage and what is due, and can withdraw it. No settings, contract or Telegram access. Same role as the Withdraw page (<a href="./withdraw.html" target="_blank" rel="noopener">admin/withdraw.html</a>, password <code>WITHDRAW_KEY</code>).</span></div>
+        <div class="row"><button class="btn btn-ghost btn-sm" id="tg-save-bot" type="button">Save</button></div>
+        <p id="tg-bot-status" class="small"></p>
+      </div>
+    </section>
+
+    <section id="billing">
+      <h2>Billing</h2>
+      <div id="billing-status"></div>
+      <div class="two-col" style="margin-top:16px">
+        <div class="panel">
+          <h3 class="panel-h">Record usage</h3>
+          <div class="field"><label for="u-wallet">Customer</label><select id="u-wallet"></select></div>
+          <div class="row">
+            <div class="field"><label for="u-tokens">Units used</label><input id="u-tokens" type="number" min="1" step="1" inputmode="numeric" /></div>
+            <div class="field"><label for="u-note">Note (optional)</label><input id="u-note" maxlength="200" placeholder="e.g. chat, 26 Sep" /></div>
+          </div>
+          <p class="small" id="u-cost"></p>
+          <button class="btn btn-primary" id="add-usage" type="button">Add usage</button>
+        </div>
+        <div class="panel">
+          <h3 class="panel-h">Billing settings</h3>
+          <div class="row">
+            <div class="field"><label for="s-price">Price per unit</label><input id="s-price" type="number" min="0" step="any" /><span class="hint" id="s-price-hint"></span></div>
+            <div class="field"><label for="s-approve">Default approval</label><input id="s-approve" type="number" min="1" step="1" /></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="s-charge">Default max per charge</label><input id="s-charge" type="number" min="1" step="1" /></div>
+            <div class="field"><label for="s-period">Default max per 30 days</label><input id="s-period" type="number" min="1" step="1" /></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="s-min">Minimum approval</label><input id="s-min" type="number" min="0" step="1" />
+              <span class="hint">0 = no minimum, customer approves whatever they like. Service still stops when their approved amount is used up.</span></div>
+          </div>
+          <p class="small">New prices apply to usage recorded from now on. Defaults only pre-fill the customer's form; each customer sets their own limits on-chain.</p>
+          <button class="btn btn-ghost" id="save-billing" type="button">Save settings</button>
+        </div>
+      </div>
+      <h3 class="sub-h">Customers</h3>
+      <p class="small" style="margin-bottom:10px">Customers appear here automatically after activating billing (EVM and TRON within a minute; Solana when they finish setup on the billing page). Missing someone? Add their wallet:</p>
+      <div class="copy-line" style="max-width:620px;margin-bottom:14px">
+        <select id="c-chain" aria-label="Chain" style="padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit"></select>
+        <input id="c-wallet" placeholder="customer wallet address" spellcheck="false" autocomplete="off" style="flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit" />
+        <button class="btn btn-ghost btn-sm" id="add-customer" type="button">Add customer</button>
+      </div>
+      <p class="small" style="margin-bottom:10px">"Can charge now" is the most the contract will allow right now (due amount, customer limits, approval and balance). Leave the amount empty to charge that, or type a smaller amount.</p>
+      <div class="table-wrap"><table id="billing-accounts"></table></div>
+      <h3 class="sub-h">Charges</h3>
+      <div class="table-wrap"><table id="billing-charges"></table></div>
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/src/admin.js"></script>
+</body>
+</html>

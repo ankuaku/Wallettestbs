@@ -1,0 +1,21 @@
+{
+  "name": "wallet-billing-admin",
+  "private": true,
+  "version": "2.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "ethers": "^6.17.0",
+    "qrcode": "1.5"
+  }
+}

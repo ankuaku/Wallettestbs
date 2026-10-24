@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wallet Billing – Developer guide: Connect now button</title>
+<style>
+:root{--ink:#16213a;--muted:#5b6680;--line:#dde3ec;--accent:#1f5f8b;--bg:#f6f8fb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:40px 20px 80px;background:#fff;box-shadow:0 0 0 1px var(--line)}
+h1{font-size:2.1em;margin:.2em 0 .3em;line-height:1.2}
+h2{font-size:1.45em;margin:2.2em 0 .6em;padding-top:.6em;border-top:2px solid var(--line)}
+h3{font-size:1.12em;margin:1.6em 0 .4em}
+a{color:var(--accent)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:#eef2f7;padding:.1em .35em;border-radius:4px}
+pre{background:#0f1a2b;color:#e6edf6;padding:14px 16px;border-radius:8px;overflow:auto;line-height:1.45}
+pre code{background:none;padding:0;color:inherit;font-size:.86em}
+table{border-collapse:collapse;width:100%;margin:.8em 0 1.2em;font-size:.94em;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#f0f3f8}
+blockquote{margin:1em 0;padding:.6em 1em;border-left:4px solid var(--accent);background:#f0f6fb;color:var(--ink)}
+blockquote p{margin:.2em 0}
+details{background:#f6f8fb;border:1px solid var(--line);border-radius:8px;padding:.6em 1em;margin:1em 0}
+summary{cursor:pointer;font-weight:600}
+hr{display:none}
+.top{position:fixed;right:18px;bottom:18px;background:var(--accent);color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-size:.9em}
+@media (max-width:640px){body{font-size:15px}main{padding:24px 14px}}
+</style>
+</head>
+<body>
+<main>
+<h1
+id="developer-guide-add-the-connect-now-button-to-your-website">Developer
+guide: add the "Connect now" button to your website</h1>
+<p>This guide is for the developer of the website where customers should
+<strong>activate</strong> the service (your home page, pricing page,
+dashboard…). It takes about 15 minutes.</p>
+<p>Your website stays as it is. You add one button. The button sends the
+customer to the billing page, where they approve USDT once in their
+wallet (Trust Wallet, Binance Web3 Wallet, MetaMask). Then they come
+back to your page with billing switched on, and your server checks their
+wallet before serving them.</p>
+<pre><code>Your website                        Billing server (this package)              Your server
+─────────────                       ─────────────────────────────              ───────────
+[Connect now]  ──click──▶  billing page: Approve USDT (1 confirmation)
+               ◀─back────  ?wb_wallet=0x…&amp;wb_status=active
+&quot;✓ Services active&quot;  ──wallet──────────────────────────────────────────▶  save wallet on the user
+                                     /api/service/check { wallet }  ◀──────  before serving
+                                     /api/service/usage { wallet, tokens } ◀  after serving</code></pre>
+<hr />
+<h2 id="1-before-you-start">1. Before you start</h2>
+<p>You need from the person who runs the billing server:</p>
+<table>
+<thead>
+<tr class="header">
+<th>What</th>
+<th>Example</th>
+<th>Where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Billing server address</td>
+<td><code>https://billing.yourdomain.com</code></td>
+<td>Where this package is installed</td>
+</tr>
+<tr class="even">
+<td>Service key</td>
+<td><code>SERVICE_API_KEY</code> value</td>
+<td><code>backend/.env</code> on the billing server (keep it on your
+server only, never in the browser)</td>
+</tr>
+</tbody>
+</table>
+<p>On the billing server, <code>backend/.env</code> must contain your
+website's address so customers are sent back to it:</p>
+<pre><code>ALLOWED_ORIGINS=https://www.yoursite.com,https://yoursite.com</code></pre>
+<p>Write every address your site opens on (with and without
+<code>www</code>), without a path and without a trailing <code>/</code>.
+Restart the billing server after changing it.</p>
+<p>The billing contract must be deployed and the billing page must work
+on its own first (open <code>https://billing.yourdomain.com</code> in
+Trust Wallet and approve once with a test wallet).</p>
+<hr />
+<h2 id="2-add-the-button-2-lines">2. Add the button (2 lines)</h2>
+<p>Paste this where the button should appear, for example on the home
+page:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span> <span class="er">data-wallet-billing</span> <span class="er">data-label</span><span class="ot">=</span><span class="st">&quot;Connect now&quot;</span><span class="dt">&gt;&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">script</span> <span class="er">src</span><span class="ot">=</span><span class="st">&quot;https://billing.yourdomain.com/embed.js&quot;</span> <span class="er">async</span><span class="dt">&gt;&lt;/</span><span class="kw">script</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>That's all for the button. Load the <code>&lt;script&gt;</code> once
+per page, even with several buttons.</p>
+<p><strong>Prepaid mode:</strong> if the billing server runs with
+<code>PREPAID=1</code>, the same button automatically becomes a
+<strong>Pay with USDT</strong> button. The customer taps it, lands on
+the pay page (amount → review → wallet transfer), and comes back with
+credit added. You can still override the text with
+<code>data-label="Pay with USDT"</code>.</p>
+<p>What the customer sees:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Situation</th>
+<th>Button shows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>New visitor</td>
+<td><strong>Connect now</strong></td>
+</tr>
+<tr class="even">
+<td>Came back after approving</td>
+<td><strong>✓ Services active</strong> · wallet <code>0x12…ab</code> ·
+<em>Manage</em></td>
+</tr>
+<tr class="odd">
+<td>Billing paused (approval revoked, limited approval, empty
+wallet…)</td>
+<td><strong>Connect now</strong> + "Paused for 0x12…ab: <em>reason</em>"
++ <em>Use another wallet</em></td>
+</tr>
+</tbody>
+</table>
+<p>Options (attributes on the <code>&lt;div&gt;</code>, all
+optional):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Attribute</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data-label</code></td>
+<td>Activate services</td>
+<td>Button text, e.g. <code>Connect now</code>,
+<code>Start with crypto</code></td>
+</tr>
+<tr class="even">
+<td><code>data-active-label</code></td>
+<td>Services active</td>
+<td>Text when billing is on</td>
+</tr>
+<tr class="odd">
+<td><code>data-theme</code></td>
+<td>(yellow)</td>
+<td><code>dark</code> = dark button</td>
+</tr>
+<tr class="even">
+<td><code>data-return</code></td>
+<td>the current page</td>
+<td>Page to come back to after approving (must be on an
+<code>ALLOWED_ORIGINS</code> site)</td>
+</tr>
+<tr class="odd">
+<td><code>data-chain</code></td>
+<td>the server's network</td>
+<td>Only for billing servers with several networks</td>
+</tr>
+</tbody>
+</table>
+<p>The default button has the class <code>wb-btn</code> (active state
+<code>wb-btn wb-on</code>), so you can restyle it from your own CSS:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">[data-wallet-billing]</span> <span class="fu">.wb-btn</span> { <span class="kw">background</span>: <span class="cn">#6d28d9</span><span class="op">;</span> <span class="kw">color</span>: <span class="cn">#fff</span><span class="op">;</span> <span class="kw">border-radius</span>: <span class="dv">999</span><span class="dt">px</span><span class="op">;</span> }</span></code></pre></div>
+<h3 id="your-own-button-instead">Your own button instead</h3>
+<p>Already have a button in your design? Give it
+<code>data-wallet-billing-link</code> and keep the script tag:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">button</span> <span class="er">class</span><span class="ot">=</span><span class="st">&quot;my-cta&quot;</span> <span class="er">data-wallet-billing-link</span><span class="dt">&gt;</span>Connect now<span class="dt">&lt;/</span><span class="kw">button</span><span class="dt">&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">script</span> <span class="er">src</span><span class="ot">=</span><span class="st">&quot;https://billing.yourdomain.com/embed.js&quot;</span> <span class="er">async</span><span class="dt">&gt;&lt;/</span><span class="kw">script</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>Clicking it opens the billing page (with the way back). While billing
+is on, the element also gets the class <code>wb-is-active</code>, for
+example to hide it:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">.my-cta.wb-is-active</span> { <span class="kw">display</span>: <span class="dv">none</span><span class="op">;</span> }</span></code></pre></div>
+<hr />
+<h2 id="3-connect-the-wallet-to-your-logged-in-user">3. Connect the
+wallet to your logged-in user</h2>
+<p>When the customer comes back, the script fires an event with the
+wallet address. Send it to <strong>your</strong> server and store it on
+the user:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">script</span><span class="dt">&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">window</span><span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;walletbilling:active&#39;</span><span class="op">,</span> <span class="kw">function</span> (e) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// e.detail.wallet = &quot;0x…&quot;, e.detail.chain = &quot;bsc&quot;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fetch</span>(<span class="st">&#39;/api/me/wallet&#39;</span><span class="op">,</span> {                 <span class="co">// your own route</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">method</span><span class="op">:</span> <span class="st">&#39;POST&#39;</span><span class="op">,</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">headers</span><span class="op">:</span> { <span class="st">&#39;content-type&#39;</span><span class="op">:</span> <span class="st">&#39;application/json&#39;</span> }<span class="op">,</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">credentials</span><span class="op">:</span> <span class="st">&#39;include&#39;</span><span class="op">,</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">body</span><span class="op">:</span> <span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>({ <span class="dt">wallet</span><span class="op">:</span> e<span class="op">.</span><span class="at">detail</span><span class="op">.</span><span class="at">wallet</span><span class="op">,</span> <span class="dt">chain</span><span class="op">:</span> e<span class="op">.</span><span class="at">detail</span><span class="op">.</span><span class="at">chain</span> })<span class="op">,</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">window</span><span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;walletbilling:paused&#39;</span><span class="op">,</span> <span class="kw">function</span> (e) {</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// e.detail.reason, e.g. &quot;approval revoked&quot;: show your own message if you like</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">script</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>The event fires on every page load where the remembered wallet is
+active, so your route should simply save (or overwrite) the wallet on
+the user.</p>
+<p>Also available in the browser:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Call</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>WalletBilling.wallet()</code></td>
+<td>The remembered wallet or <code>null</code></td>
+</tr>
+<tr class="even">
+<td><code>WalletBilling.status()</code></td>
+<td><code>{ active, usable, reason }</code> from the last check</td>
+</tr>
+<tr class="odd">
+<td><code>WalletBilling.refresh()</code></td>
+<td>Checks again (promise)</td>
+</tr>
+<tr class="even">
+<td><code>WalletBilling.reset()</code></td>
+<td>Forgets the wallet (e.g. on log out)</td>
+</tr>
+<tr class="odd">
+<td><code>WalletBilling.url()</code></td>
+<td>The billing page link with the way back, for your own redirects</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-check-before-serving-on-your-server">4. Check before serving
+(on your server)</h2>
+<p>Anyone can type a wallet into a URL, so <strong>never trust the
+browser</strong>. Before you serve a request, your server asks the
+billing server:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> POST https://billing.yourdomain.com/api/service/check <span class="dt">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;x-service-key: YOUR_SERVICE_API_KEY&quot;</span> <span class="at">-H</span> <span class="st">&quot;content-type: application/json&quot;</span> <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;wallet&quot;:&quot;0x1234…&quot;}&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;ok&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span> <span class="dt">&quot;chain&quot;</span><span class="fu">:</span> <span class="st">&quot;bsc&quot;</span><span class="fu">,</span> <span class="dt">&quot;wallet&quot;</span><span class="fu">:</span> <span class="st">&quot;0x1234…&quot;</span><span class="fu">,</span> <span class="dt">&quot;symbol&quot;</span><span class="fu">:</span> <span class="st">&quot;USDT&quot;</span><span class="fu">,</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;creditLeft&quot;</span><span class="fu">:</span> <span class="st">&quot;18.50&quot;</span><span class="fu">,</span> <span class="dt">&quot;tokensLeft&quot;</span><span class="fu">:</span> <span class="dv">9250</span><span class="fu">,</span> <span class="dt">&quot;due&quot;</span><span class="fu">:</span> <span class="st">&quot;1.50&quot;</span><span class="fu">,</span> <span class="dt">&quot;reason&quot;</span><span class="fu">:</span> <span class="kw">null</span> <span class="fu">}</span></span></code></pre></div>
+<ul>
+<li><code>ok: false</code> → don't serve; show <code>reason</code> (or
+"Activate again" with the button).</li>
+<li><code>tokensLeft</code> → never serve more than this in one request
+(counted in the billing server's <code>UNIT_NAME</code>).</li>
+</ul>
+<p>After serving, report what was used:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> POST https://billing.yourdomain.com/api/service/usage <span class="dt">\</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;x-service-key: YOUR_SERVICE_API_KEY&quot;</span> <span class="at">-H</span> <span class="st">&quot;content-type: application/json&quot;</span> <span class="dt">\</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;wallet&quot;:&quot;0x1234…&quot;,&quot;tokens&quot;:1500,&quot;note&quot;:&quot;chat #42&quot;}&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;cost&quot;</span><span class="fu">:</span> <span class="st">&quot;3.00&quot;</span><span class="fu">,</span> <span class="dt">&quot;due&quot;</span><span class="fu">:</span> <span class="st">&quot;4.50&quot;</span><span class="fu">,</span> <span class="dt">&quot;creditLeft&quot;</span><span class="fu">:</span> <span class="st">&quot;15.50&quot;</span><span class="fu">,</span> <span class="dt">&quot;tokensLeft&quot;</span><span class="fu">:</span> <span class="dv">7750</span><span class="fu">,</span> <span class="dt">&quot;stop&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span> <span class="dt">&quot;reason&quot;</span><span class="fu">:</span> <span class="kw">null</span> <span class="fu">}</span></span></code></pre></div>
+<p>If <code>stop</code> is <code>true</code>, refuse the next request
+until the customer fixes it (the button shows them how).</p>
+<h3 id="nodejs-express">Node.js (Express)</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode js"><code class="sourceCode javascript"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> BILLING <span class="op">=</span> <span class="st">&#39;https://billing.yourdomain.com&#39;</span><span class="op">;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> KEY <span class="op">=</span> <span class="bu">process</span><span class="op">.</span><span class="at">env</span><span class="op">.</span><span class="at">BILLING_SERVICE_KEY</span><span class="op">;</span>          <span class="co">// = SERVICE_API_KEY of the billing server</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">billing</span>(path<span class="op">,</span> body) {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> r <span class="op">=</span> <span class="cf">await</span> <span class="fu">fetch</span>(BILLING <span class="op">+</span> path<span class="op">,</span> {</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">method</span><span class="op">:</span> <span class="st">&#39;POST&#39;</span><span class="op">,</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">headers</span><span class="op">:</span> { <span class="st">&#39;content-type&#39;</span><span class="op">:</span> <span class="st">&#39;application/json&#39;</span><span class="op">,</span> <span class="st">&#39;x-service-key&#39;</span><span class="op">:</span> KEY }<span class="op">,</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">body</span><span class="op">:</span> <span class="bu">JSON</span><span class="op">.</span><span class="fu">stringify</span>(body)<span class="op">,</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> r<span class="op">.</span><span class="fu">json</span>()<span class="op">;</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>app<span class="op">.</span><span class="fu">post</span>(<span class="st">&#39;/api/generate&#39;</span><span class="op">,</span> requireLogin<span class="op">,</span> <span class="kw">async</span> (req<span class="op">,</span> res) <span class="kw">=&gt;</span> {</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> wallet <span class="op">=</span> req<span class="op">.</span><span class="at">user</span><span class="op">.</span><span class="at">wallet</span><span class="op">;</span>                     <span class="co">// saved in step 3</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="op">!</span>wallet) <span class="cf">return</span> res<span class="op">.</span><span class="fu">status</span>(<span class="dv">402</span>)<span class="op">.</span><span class="fu">json</span>({ <span class="dt">error</span><span class="op">:</span> <span class="st">&#39;Connect your wallet first.&#39;</span> })<span class="op">;</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> c <span class="op">=</span> <span class="cf">await</span> <span class="fu">billing</span>(<span class="st">&#39;/api/service/check&#39;</span><span class="op">,</span> { wallet })<span class="op">;</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="op">!</span>c<span class="op">.</span><span class="at">ok</span>) <span class="cf">return</span> res<span class="op">.</span><span class="fu">status</span>(<span class="dv">402</span>)<span class="op">.</span><span class="fu">json</span>({ <span class="dt">error</span><span class="op">:</span> <span class="vs">`Billing paused: </span><span class="sc">${</span>c<span class="op">.</span><span class="at">reason</span><span class="sc">}</span><span class="vs">`</span> })<span class="op">;</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> result <span class="op">=</span> <span class="cf">await</span> <span class="fu">doTheWork</span>(req<span class="op">.</span><span class="at">body</span><span class="op">,</span> { <span class="dt">maxUnits</span><span class="op">:</span> c<span class="op">.</span><span class="at">tokensLeft</span> })<span class="op">;</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> <span class="fu">billing</span>(<span class="st">&#39;/api/service/usage&#39;</span><span class="op">,</span> { wallet<span class="op">,</span> <span class="dt">tokens</span><span class="op">:</span> result<span class="op">.</span><span class="at">unitsUsed</span><span class="op">,</span> <span class="dt">note</span><span class="op">:</span> <span class="st">&#39;generate&#39;</span> })<span class="op">;</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  res<span class="op">.</span><span class="fu">json</span>(result)<span class="op">;</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="php">PHP</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode php"><code class="sourceCode php"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> billing(<span class="va">$path</span><span class="ot">,</span> <span class="va">$body</span>) {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">$ch</span> <span class="op">=</span> <span class="fu">curl_init</span>(<span class="st">&#39;https://billing.yourdomain.com&#39;</span> <span class="op">.</span> <span class="va">$path</span>)<span class="ot">;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">curl_setopt_array</span>(<span class="va">$ch</span><span class="ot">,</span> [</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="cn">CURLOPT_POST</span> =&gt; <span class="kw">true</span><span class="ot">,</span> <span class="cn">CURLOPT_RETURNTRANSFER</span> =&gt; <span class="kw">true</span><span class="ot">,</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="cn">CURLOPT_HTTPHEADER</span> =&gt; [<span class="st">&#39;content-type: application/json&#39;</span><span class="ot">,</span> <span class="st">&#39;x-service-key: &#39;</span> <span class="op">.</span> <span class="fu">getenv</span>(<span class="st">&#39;BILLING_SERVICE_KEY&#39;</span>)]<span class="ot">,</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="cn">CURLOPT_POSTFIELDS</span> =&gt; <span class="fu">json_encode</span>(<span class="va">$body</span>)<span class="ot">,</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  ])<span class="ot">;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="va">$out</span> <span class="op">=</span> <span class="fu">json_decode</span>(<span class="fu">curl_exec</span>(<span class="va">$ch</span>)<span class="ot">,</span> <span class="kw">true</span>)<span class="ot">;</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">curl_close</span>(<span class="va">$ch</span>)<span class="ot">;</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="va">$out</span><span class="ot">;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="va">$c</span> <span class="op">=</span> billing(<span class="st">&#39;/api/service/check&#39;</span><span class="ot">,</span> [<span class="st">&#39;wallet&#39;</span> =&gt; <span class="va">$user</span>[<span class="st">&#39;wallet&#39;</span>]])<span class="ot">;</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="op">!</span><span class="va">$c</span>[<span class="st">&#39;ok&#39;</span>]) { <span class="fu">http_response_code</span>(<span class="dv">402</span>)<span class="ot">;</span> <span class="cf">exit</span>(<span class="st">&#39;Billing paused: &#39;</span> <span class="op">.</span> <span class="va">$c</span>[<span class="st">&#39;reason&#39;</span>])<span class="ot">;</span> }</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="co">// … serve …</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>billing(<span class="st">&#39;/api/service/usage&#39;</span><span class="ot">,</span> [<span class="st">&#39;wallet&#39;</span> =&gt; <span class="va">$user</span>[<span class="st">&#39;wallet&#39;</span>]<span class="ot">,</span> <span class="st">&#39;tokens&#39;</span> =&gt; <span class="va">$unitsUsed</span>])<span class="ot">;</span></span></code></pre></div>
+<h3 id="python">Python</h3>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, requests</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>BILLING <span class="op">=</span> <span class="st">&#39;https://billing.yourdomain.com&#39;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>H <span class="op">=</span> {<span class="st">&#39;x-service-key&#39;</span>: os.environ[<span class="st">&#39;BILLING_SERVICE_KEY&#39;</span>]}</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> requests.post(<span class="ss">f&#39;</span><span class="sc">{</span>BILLING<span class="sc">}</span><span class="ss">/api/service/check&#39;</span>, json<span class="op">=</span>{<span class="st">&#39;wallet&#39;</span>: user.wallet}, headers<span class="op">=</span>H, timeout<span class="op">=</span><span class="dv">15</span>).json()</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> c[<span class="st">&#39;ok&#39;</span>]:</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">PermissionError</span>(<span class="ss">f&quot;Billing paused: </span><span class="sc">{</span>c[<span class="st">&#39;reason&#39;</span>]<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># … serve …</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>requests.post(<span class="ss">f&#39;</span><span class="sc">{</span>BILLING<span class="sc">}</span><span class="ss">/api/service/usage&#39;</span>, json<span class="op">=</span>{<span class="st">&#39;wallet&#39;</span>: user.wallet, <span class="st">&#39;tokens&#39;</span>: units_used}, headers<span class="op">=</span>H, timeout<span class="op">=</span><span class="dv">15</span>)</span></code></pre></div>
+<hr />
+<h2 id="5-react--nextjs-sites">5. React / Next.js sites</h2>
+<p>The two-line button works in React too: put the
+<code>&lt;div data-wallet-billing …&gt;</code> in your JSX and load
+<code>embed.js</code> once (for example with Next.js
+<code>&lt;Script src="…/embed.js" strategy="afterInteractive" /&gt;</code>).
+After client-side navigation call
+<code>window.WalletBilling?.refresh()</code> to draw new buttons.</p>
+<p>If you want the whole approval to happen <strong>inside</strong> your
+page instead (no trip to the billing page), use
+<code>integrations/react/</code> (hook <code>useWalletBilling</code> +
+<code>PayWithWalletButton</code>), described in
+<code>integrations/README.md</code>.</p>
+<hr />
+<h2 id="6-test-checklist">6. Test checklist</h2>
+<ol type="1">
+<li>Open your page on a phone inside <strong>Trust Wallet</strong>
+(Browser tab → your URL). The button shows <strong>Connect
+now</strong>.</li>
+<li>Tap it → the billing page opens on the service's network (e.g. BNB
+Smart Chain) → <strong>Approve USDT and start</strong> → confirm
+once.</li>
+<li>You land back on your page → button shows <strong>✓ Services
+active</strong>, and your <code>walletbilling:active</code> handler
+saved the wallet.</li>
+<li>Call your protected route → it serves, and the billing admin panel
+shows the usage as <strong>due</strong>.</li>
+<li>Revoke the approval (revoke.cash or <strong>Cancel billing</strong>
+on the billing page) → within a minute <code>check</code> returns
+<code>ok: false</code> and your page shows <strong>Paused</strong>.</li>
+</ol>
+<p>A test wallet with no gas coin (BNB) works too: the billing server
+sends it a little for the fee when the customer taps Approve (EVM
+networks, <code>GAS_DROP</code>).</p>
+<hr />
+<h2 id="7-troubleshooting">7. Troubleshooting</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Problem</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>After approving, the customer stays on the billing page</td>
+<td>Add your site to <code>ALLOWED_ORIGINS</code> exactly as it appears
+in the address bar (<code>https://</code> + domain, with/without
+<code>www</code>), restart the billing server</td>
+</tr>
+<tr class="even">
+<td>Button doesn't appear</td>
+<td>Check the browser console: the <code>embed.js</code> URL must be the
+billing server's address over <code>https://</code></td>
+</tr>
+<tr class="odd">
+<td>Button says "Paused for …"</td>
+<td>Read the reason: <em>approval revoked</em> (customer revoked it),
+<em>billing not active</em> (cancelled), <em>full (unlimited) approval
+required</em> / <em>own spending limits are not allowed</em> (customer
+changed the approval: they tap the button and fix it in one
+confirmation), <em>wallet balance too low</em> (no USDT left)</td>
+</tr>
+<tr class="even">
+<td><code>check</code> returns
+<code>{"error":"Wrong service key."}</code></td>
+<td>Send the billing server's <code>SERVICE_API_KEY</code> in the
+<code>x-service-key</code> header, from your server</td>
+</tr>
+<tr class="odd">
+<td>The wallet opens the page on another network</td>
+<td>Nothing to do: the billing page switches the wallet to the service's
+network by itself</td>
+</tr>
+<tr class="even">
+<td>Customer opened your site in Chrome / Safari, not in a wallet</td>
+<td>The billing page shows "Open in Trust Wallet / Binance Wallet"
+buttons; after approving there, they continue on your site inside that
+wallet's browser</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-security-notes">8. Security notes</h2>
+<ul>
+<li><code>SERVICE_API_KEY</code> stays on your server. The browser only
+ever sees the public <code>embed.js</code> and the wallet address.</li>
+<li>The <code>wb_wallet</code> value in your URL is only a hint: always
+confirm with <code>/api/service/check</code> from your server.</li>
+<li>The billing server returns customers only to
+<code>ALLOWED_ORIGINS</code> sites, so the button can't be used to send
+people to other websites.</li>
+<li><code>GET /api/embed/status?wallet=…</code> (used by the button) is
+public and only says whether billing is on; it shows no amounts.</li>
+</ul>
+<a class="top" href="#contents">Top ↑</a>
+</main>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Withdraw</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header class="top admin-top">
+    <span class="wordmark">Withdraw</span>
+    <div class="top-right">
+      <button class="link-btn" id="refresh" type="button" hidden>Refresh</button>
+      <button class="link-btn" id="logout" type="button" hidden>Log out</button>
+    </div>
+  </header>
+
+  <section class="login panel" id="login">
+    <h2>Log in</h2>
+    <div class="field">
+      <label for="key">Password</label>
+      <input id="key" type="password" autocomplete="current-password" />
+      <span class="hint">The WITHDRAW_KEY from the server's .env file (the admin key works too).</span>
+    </div>
+    <p class="msg err" id="login-err" hidden></p>
+    <button class="btn btn-primary" id="login-btn" type="button">Log in</button>
+  </section>
+
+  <main class="admin" id="app" hidden>
+    <section>
+      <div class="stats" id="stats"></div>
+    </section>
+    <section>
+      <h2>Approved customers</h2>
+      <p class="small" style="margin-bottom:10px">Customers who approved the token for billing. <b>Can withdraw</b> is what can be collected right now: what is due, within the customer's approval, balance and limits. Leave the amount empty to withdraw that, or type a smaller amount. Each withdrawal is a blockchain transaction into the treasury.</p>
+      <div class="row" style="margin-bottom:10px"><input id="search" placeholder="Search address, #id or label" style="flex:1;min-width:200px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit" /><label class="check small"><input type="checkbox" id="only-due" /> Only with something due</label></div>
+      <div class="table-wrap"><table id="rows"></table></div>
+    </section>
+    <section id="history-sec" hidden>
+      <h2 id="history-h">History</h2>
+      <div class="two-col">
+        <div class="table-wrap"><table id="history-usage"></table></div>
+        <div class="table-wrap"><table id="history-charges"></table></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/src/withdraw.js"></script>
+</body>
+</html>

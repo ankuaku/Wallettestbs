@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pay as you go, billed from your wallet</title>
+  <meta name="description" content="Pay only for what you use, in USDT from your own wallet. Approve once, set your own limits, cancel any time." />
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#16213A" />
+  <link rel="apple-touch-icon" href="/icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header class="top">
+    <a class="wordmark" href="/" data-store-name>My Service</a>
+    <div class="top-right">
+      <span class="net-pill" id="net-pill" hidden></span>
+      <span class="wallet-chip" id="wallet-chip" hidden></span>
+    </div>
+  </header>
+
+  <main class="ai">
+    <section class="ai-hero">
+      <div>
+        <h1>Pay only for what you use.</h1>
+        <p class="lede">Approve once from your wallet and set your own spending limits. We bill your usage in <span data-token>USDT</span>, and can never take more than the limits you set on-chain.</p>
+      </div>
+      <div class="price-card" aria-live="polite">
+        <span class="k">Price</span>
+        <span class="v"><span id="price">…</span> <span data-token>USDT</span></span>
+        <span class="k">per <span data-unit-one>token</span> · <span id="price-1k">…</span> per 1,000</span>
+      </div>
+    </section>
+
+    <section class="ai-grid">
+      <div class="panel ai-setup" id="setup">
+        <h2>Set up billing</h2>
+        <div class="chips" id="chain-pick" hidden style="margin:4px 0 12px"></div>
+        <p class="small" id="setup-intro">About a minute: pick your network, connect, approve in your wallet. That one confirmation is the whole setup.</p>
+        <ol class="setup-steps" id="setup-steps"></ol>
+        <div id="setup-body"></div>
+      </div>
+
+      <aside class="ai-trust">
+        <h2>How your limits protect you</h2>
+        <ul class="plain">
+          <li><strong>Your approval is the cap.</strong> One confirmation sets it up, and we can never collect more than the amount you approve.</li>
+          <li class="lim-opt"><strong>Per charge (optional).</strong> A single bill can never be larger than the amount you choose.</li>
+          <li class="lim-opt"><strong>Per 30 days (optional).</strong> The total billed in any 30-day window stops at your cap.</li>
+          <li id="trust-treasury"><strong>Straight to us.</strong> Payments can only go to our treasury address, set in the contract.</li>
+          <li><strong>Cancel any time.</strong> Cancel here, or revoke the <span data-token>USDT</span> approval from your wallet, and no further charges can go through.</li>
+        </ul>
+        <p class="small" id="contract-line"></p>
+      </aside>
+    </section>
+
+    <section class="panel ai-dash" id="dashboard" hidden>
+      <div class="dash-head">
+        <h2>Your usage</h2>
+        <button class="link-btn" type="button" id="refresh">Refresh</button>
+      </div>
+      <div class="stats" id="dash-stats"></div>
+      <div class="dash-cols">
+        <div>
+          <h3>API key</h3>
+          <p class="small" id="key-line">Use this key with our service. Keep it private.</p>
+          <div id="key-box"></div>
+          <button class="btn btn-ghost btn-sm" type="button" id="new-key">Create API key</button>
+        </div>
+        <div>
+          <h3>Limits</h3>
+          <div id="limit-box"></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-ghost btn-sm" type="button" id="edit-limits">Change limits</button>
+            <button class="btn btn-ghost btn-sm danger" type="button" id="cancel-billing">Cancel billing</button>
+          </div>
+        </div>
+      </div>
+      <h3>Recent usage</h3>
+      <div class="table-wrap"><table id="usage-table"></table></div>
+      <h3>Charges</h3>
+      <div class="table-wrap"><table id="charge-table"></table></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p id="foot-line">Charges are made by our billing contract on <span data-net>BNB Smart Chain</span>, only within the limits you set. Every charge has a transaction you can check on the explorer.</p>
+  </footer>
+
+  <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-text">
+    <div class="modal-box">
+      <p id="modal-text"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modal-no" type="button">Cancel</button>
+        <button class="btn btn-primary" id="modal-yes" type="button">Yes</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>

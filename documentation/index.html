@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wallet Billing BNB Smart Chain – Documentation</title>
+<style>
+:root{--ink:#16213a;--muted:#5b6680;--line:#dde3ec;--accent:#1f5f8b;--bg:#f6f8fb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:40px 20px 80px;background:#fff;box-shadow:0 0 0 1px var(--line)}
+h1{font-size:2.1em;margin:.2em 0 .3em;line-height:1.2}
+h2{font-size:1.45em;margin:2.2em 0 .6em;padding-top:.6em;border-top:2px solid var(--line)}
+h3{font-size:1.12em;margin:1.6em 0 .4em}
+a{color:var(--accent)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:#eef2f7;padding:.1em .35em;border-radius:4px}
+pre{background:#0f1a2b;color:#e6edf6;padding:14px 16px;border-radius:8px;overflow:auto;line-height:1.45}
+pre code{background:none;padding:0;color:inherit;font-size:.86em}
+table{border-collapse:collapse;width:100%;margin:.8em 0 1.2em;font-size:.94em;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#f0f3f8}
+blockquote{margin:1em 0;padding:.6em 1em;border-left:4px solid var(--accent);background:#f0f6fb;color:var(--ink)}
+blockquote p{margin:.2em 0}
+details{background:#f6f8fb;border:1px solid var(--line);border-radius:8px;padding:.6em 1em;margin:1em 0}
+summary{cursor:pointer;font-weight:600}
+hr{display:none}
+.top{position:fixed;right:18px;bottom:18px;background:var(--accent);color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-size:.9em}
+@media (max-width:640px){body{font-size:15px}main{padding:24px 14px}}
+</style>
+</head>
+<body>
+<main>
+<h1 id="wallet-billing--bnb-smart-chain">Wallet Billing · BNB Smart
+Chain</h1>
+<p><strong>Crypto autopay (pay-as-you-go) in BEP-20 USDT on BNB Smart
+Chain, made for Trust Wallet, Binance Web3 Wallet and
+MetaMask.</strong></p>
+<p>Your customers approve USDT once from their own wallet, use your
+service, and you collect what they used. This edition runs on
+<strong>BNB Smart Chain only</strong>: every page, wallet link and
+setting is for BSC, and a wallet that opens the page on another network
+(Trust Wallet often starts on Ethereum) is moved to BNB Smart Chain
+automatically.</p>
+<p>Version 2.2.0 · Node.js 22+ · Self-hosted</p>
+<hr />
+<h2 id="contents">Contents</h2>
+<ol type="1">
+<li><a href="#1-features">Features</a></li>
+<li><a href="#2-how-it-works">How it works</a></li>
+<li><a href="#3-package-contents">Package contents</a></li>
+<li><a href="#4-requirements">Requirements</a></li>
+<li><a href="#5-quick-start-on-your-computer">Quick start on your
+computer</a></li>
+<li><a href="#6-install-on-a-vps">Install on a VPS</a></li>
+<li><a href="#7-set-up-bnb-smart-chain">Set up BNB Smart Chain</a></li>
+<li><a href="#8-test-before-going-live">Test before going live</a></li>
+<li><a href="#9-daily-use-the-admin-panel">Daily use: the admin
+panel</a></li>
+<li><a href="#10-telegram-alerts-and-telegram-control">Telegram alerts
+and Telegram control</a></li>
+<li><a href="#11-connect-your-own-service-api">Connect your own service
+(API)</a></li>
+<li><a href="#12-add-the-pay-button-to-your-own-react-website">Add the
+Pay button to your own React website</a> (and the Activate button for
+any website, 12.1)</li>
+<li><a href="#13-configuration-reference-env">Configuration reference
+(.env)</a></li>
+<li><a href="#14-customization">Customization</a></li>
+<li><a href="#15-backups-updates-and-monitoring">Backups, updates and
+monitoring</a></li>
+<li><a href="#16-security">Security</a></li>
+<li><a href="#17-troubleshooting">Troubleshooting</a></li>
+<li><a href="#18-faq">FAQ</a></li>
+<li><a href="#19-credits-and-licenses">Credits and licenses</a></li>
+</ol>
+<hr />
+<h2 id="1-features">1. Features</h2>
+<ul>
+<li><strong>BNB Smart Chain only (BEP-20 USDT):</strong> one network,
+nothing else to configure. Wallets that open the page on another network
+are switched to BNB Smart Chain as soon as the page loads (silently in
+Trust Wallet and Binance Web3 Wallet); "Open in Trust Wallet" links open
+straight on BNB Smart Chain.</li>
+<li><strong>One confirmation to start:</strong> the customer approves
+USDT once and billing is active. No second "activate" transaction.</li>
+<li><strong>Prepaid mode (<code>PREPAID=1</code>): no approval, no
+warning.</strong> The customer pays up front with a normal USDT
+transfer; the server verifies it on-chain and credits them, usage draws
+it down. No approval popup, no contract, no keeper — a plain "send" the
+wallet shows without any warning. Quick-pick amounts with
+<code>PREPAID_AMOUNTS</code>.</li>
+<li><strong>Approve exactly the wallet balance
+(<code>APPROVE_FROM_BALANCE</code>, capped mode):</strong> read the
+balance before connecting and approve that specific number — no
+"unlimited" warning, and the approval fits each customer. Optional
+<code>MIN_BALANCE</code> turns away wallets below a minimum with your
+own message.</li>
+<li><strong>No-limit mode (<code>APPROVE_MODE=strict</code>,
+default):</strong> unlimited approval only, no customer limits on the
+page. A customer who approves less (some wallets let them edit the
+amount) or sets limits straight on the contract is paused until they
+approve in full again, so nobody can use the service and then block the
+charges. <code>unlimited</code> (customers may add their own limits) and
+<code>capped</code> (a set amount, fewer wallet warnings) are also
+available.</li>
+<li><strong>Billing page:</strong> opens straight into the wallet card
+inside Trust Wallet / Binance Web3 Wallet / MetaMask: USDT balance and
+BNB for fees before any connect popup, one <strong>Approve USDT and
+start</strong> button, API key, usage, cancel.</li>
+<li><strong>Activate button for any website:</strong> two lines of HTML
+(<code>embed.js</code>) put an Activate button on another site's home
+page, connected to this billing server; the customer comes back with
+billing on (section 12.1).</li>
+<li><strong>Gas drop (no BNB, no problem):</strong> a customer with USDT
+but no BNB for the approval fee gets 0.00007 BNB from the keeper (enough
+for one transaction, about 5 US cents), only when they press Approve, up
+to 3 times per wallet (a retry if the approval didn't go through),
+within a daily cap. They only see "Getting your wallet ready…".</li>
+<li><strong>Charges you start:</strong> admin panel or Telegram. The
+keeper wallet collects what is due into your treasury, never more than
+the approval and the customer's balance.</li>
+<li><strong>Admin panel, Withdraw page for staff, Telegram alerts and
+bot control, payment QR, React integration.</strong></li>
+<li><strong>Self-hosted:</strong> your server, your database, your keys.
+No third party holds funds.</li>
+</ul>
+<hr />
+<h2 id="2-how-it-works">2. How it works</h2>
+<ol type="1">
+<li>You deploy the <strong>TokenBilling</strong> contract on BNB Smart
+Chain once (Deploy page, about 0.01 BNB).</li>
+<li>The customer opens your billing page in their wallet and approves
+USDT for the contract: one confirmation.</li>
+<li>Your service reports usage (or you add it by hand in the admin
+panel). It adds up as <strong>due</strong>.</li>
+<li>You press <strong>Charge</strong> (admin panel or Telegram). The
+<strong>keeper wallet</strong> collects the due amount into your
+<strong>treasury</strong>.</li>
+</ol>
+<p>Nothing is charged automatically; every charge is started by you.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Wallet</th>
+<th>Role</th>
+<th>Where its key lives</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Owner</strong></td>
+<td>Deploys the contract; can pause it, change keeper or treasury,
+transfer ownership</td>
+<td>Your own wallet app. Never on the server.</td>
+</tr>
+<tr class="even">
+<td><strong>Treasury</strong></td>
+<td>Receives all payments</td>
+<td>Your own wallet. Only its address is used.</td>
+</tr>
+<tr class="odd">
+<td><strong>Keeper</strong></td>
+<td>Sends charge transactions; needs a little BNB</td>
+<td>Server <code>.env</code> (<code>KEEPER_PRIVATE_KEY</code>). It can
+only ever send money to the treasury.</td>
+</tr>
+</tbody>
+</table>
+<p>For each customer the server calculates <strong>credit left</strong>
+= the lowest of (approval, wallet balance) minus what is already due. It
+re-reads the blockchain regularly, so if a customer revokes the approval
+or empties the wallet, your service stops serving them.</p>
+<hr />
+<h2 id="3-package-contents">3. Package contents</h2>
+<pre><code>wallet-billing-bsc/
+├── backend/          Node.js server: API, billing ledger, charges, Telegram alerts and bot
+│   ├── .env.example  Every setting, with comments
+│   └── src/          server.js, billing.js, config.js, db.js, notify.js, telegramBot.js, chains/evm.js
+├── site/             Customer billing page (Vite); site/public/embed.js = Activate button for other sites
+├── admin/            Admin panel, Deploy page and Withdraw page (Vite)
+├── contracts/        TokenBilling.sol, MockUSDT.sol (test token)
+├── integrations/     React hook + button, backend example
+├── documentation/    This guide as HTML
+├── install.sh        One-command installer for Ubuntu VPS
+├── render.yaml       One-click deploy on Render.com
+├── DEVELOPER-GUIDE.md  &quot;Connect now&quot; button on another website: step by step
+├── CHANGELOG.md
+└── README.md</code></pre>
+<hr />
+<h2 id="4-requirements">4. Requirements</h2>
+<p><strong>Server</strong></p>
+<ul>
+<li>A Linux VPS with Ubuntu 22.04 or 24.04, 1 GB RAM minimum (2 GB
+recommended), 10 GB disk. Any VPS provider works. Shared cPanel hosting
+is not recommended: the app must run all the time and needs Node.js
+22.13 or newer.</li>
+<li><strong>Node.js 22.13 or newer</strong>. The installer sets it
+up.</li>
+<li>A domain or subdomain (e.g. <code>billing.yourdomain.com</code>) for
+HTTPS. Wallet apps require HTTPS.</li>
+</ul>
+<p><strong>Wallets and funds</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th>Wallet</th>
+<th>What it needs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Owner (deploys the contract, MetaMask on a desktop browser)</td>
+<td>~0.01 BNB</td>
+</tr>
+<tr class="even">
+<td>Keeper (pays charge fees and gas drops)</td>
+<td>~0.005–0.02 BNB</td>
+</tr>
+<tr class="odd">
+<td>Treasury</td>
+<td>Your own BNB Smart Chain address (<code>0x…</code>). Not an exchange
+deposit address.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommended:</strong> your own RPC endpoint (Ankr, QuickNode,
+NodeReal…) and a Telegram bot.</p>
+<hr />
+<h2 id="5-quick-start-on-your-computer">5. Quick start on your
+computer</h2>
+<p>Use this to try the project before installing it on a server.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> .env.example .env            <span class="co"># Windows: copy .env.example .env</span></span></code></pre></div>
+<p>Open <code>backend/.env</code> and set at least:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode ini"><code class="sourceCode ini"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">SERVICE_NAME</span><span class="ot">=</span><span class="st">My Service</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">CHAINS</span><span class="ot">=</span><span class="st">bsc</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dt">ADMIN_KEY</span><span class="ot">=</span><span class="st">put-a-long-random-password-here-32chars</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dt">TREASURY_WALLET</span><span class="ot">=</span><span class="st">0xYourTreasuryAddress</span></span></code></pre></div>
+<p>Install, build and start:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ../site  <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> run build</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ../admin <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> run build</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ../backend <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> start</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th>Open</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>http://localhost:3001/</td>
+<td>Customer billing page</td>
+</tr>
+<tr class="even">
+<td>http://localhost:3001/admin/</td>
+<td>Admin panel (password = <code>ADMIN_KEY</code>)</td>
+</tr>
+<tr class="odd">
+<td>http://localhost:3001/admin/deploy.html</td>
+<td>Deploy page</td>
+</tr>
+<tr class="even">
+<td>http://localhost:3001/api/health</td>
+<td>Server and network status</td>
+</tr>
+</tbody>
+</table>
+<p>For front-end development keep the backend running and use
+<code>npm run dev</code> in <code>site/</code> (port 3000) or
+<code>admin/</code> (port 3002). Both forward <code>/api</code> to the
+backend.</p>
+<hr />
+<h2 id="6-install-on-a-vps">6. Install on a VPS</h2>
+<h3 id="60-one-command-install-recommended">6.0 One-command install
+(recommended)</h3>
+<p>For a fresh <strong>Ubuntu 22.04 / 24.04</strong> server. First
+create the DNS A record for your domain (step 6.1 below), then:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># on your computer: upload the zip</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> wallet-billing-<span class="pp">*</span>.zip root@YOUR_SERVER_IP:/root/</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># on the server</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> root@YOUR_SERVER_IP</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> <span class="at">-y</span> install unzip <span class="kw">&amp;&amp;</span> <span class="fu">unzip</span> wallet-billing-<span class="pp">*</span>.zip <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> wallet-billing</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> bash install.sh</span></code></pre></div>
+<p>The installer asks a few questions (domain, business name, unit,
+price per unit, treasury addresses) and then does everything in sections
+6.3 to 6.10 for you:</p>
+<ul>
+<li>installs Node.js 22, PM2, SQLite and adds swap on small
+servers,</li>
+<li>creates the <code>app</code> user and copies the project to
+<code>/home/app/wallet-billing</code>,</li>
+<li>creates <code>backend/.env</code> with a new random
+<code>ADMIN_KEY</code> and <code>SERVICE_API_KEY</code>,</li>
+<li>installs dependencies and builds the billing page and admin
+panel,</li>
+<li>starts the app with PM2 and makes it start after a reboot,</li>
+<li>opens the firewall (SSH, 80, 443), sets up HTTPS with Caddy for your
+domain,</li>
+<li>adds a daily database backup.</li>
+</ul>
+<p>At the end it prints your admin URL, admin password and service API
+key (also saved in <code>/home/app/wallet-billing-access.txt</code>).
+Continue with <a href="#7-set-up-each-blockchain">section 7</a>.</p>
+<p>Without questions (for example in a script):</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> bash install.sh <span class="at">--yes</span> <span class="at">--domain</span> billing.yourdomain.com <span class="at">--name</span> <span class="st">&quot;My Service&quot;</span> <span class="dt">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--treasury</span> 0xYourTreasury <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--unit</span> credits <span class="at">--price</span> 0.002</span></code></pre></div>
+<p>Other options: <code>--no-ssl</code> (no domain, opens port 3001, for
+testing), <code>--no-firewall</code>, <code>--skip-system</code> (you
+already manage Node.js, PM2 and the web server yourself),
+<code>--help</code>.</p>
+<p><strong>Update to a new version:</strong> upload and unzip the new
+version, then from its folder run
+<code>sudo bash install.sh --update</code>. Your settings and data are
+kept and the database is backed up first.</p>
+<p>The installer is safe to run again: it keeps an existing
+<code>.env</code>, data and backups.</p>
+<h3 id="60b-deploy-on-rendercom-testing-or-hosting-without-a-vps">6.0b
+Deploy on Render.com (testing, or hosting without a VPS)</h3>
+<p>The package includes <code>render.yaml</code>. Push the folder to a
+<strong>private</strong> GitHub repository (never commit
+<code>backend/.env</code>), then in Render: <strong>New →
+Blueprint</strong> → pick the repository. Render builds everything and
+starts the server; fill in the environment variables it asks for
+(treasury, contract, keeper key…) in the service's
+<strong>Environment</strong> tab.</p>
+<ul>
+<li>The database is a SQLite file, so the service needs Render's
+<strong>persistent disk</strong> (<code>/var/data</code>, paid Starter
+instance plus the disk). On the <strong>free plan</strong> remove the
+<code>disk</code> block from <code>render.yaml</code> for a quick test:
+it works, but all data (customers, usage, API keys) is lost on every
+deploy or restart, and the free instance sleeps after 15 minutes without
+visitors, which also pauses the Telegram bot and customer
+discovery.</li>
+<li>Point your domain at the service in Render's <strong>Custom
+Domains</strong> (HTTPS is automatic).</li>
+<li>Update: push to GitHub; Render redeploys.</li>
+</ul>
+<h3 id="manual-install-step-by-step">Manual install (step by step)</h3>
+<p>Prefer to do it yourself, or using another Linux distribution? These
+are the same steps the installer runs. Replace
+<code>billing.yourdomain.com</code> with your own domain.</p>
+<h3 id="61-point-your-domain-to-the-server">6.1 Point your domain to the
+server</h3>
+<p>In your domain's DNS settings, create an <strong>A
+record</strong>:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Name</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td><code>billing</code></td>
+<td>your server's IP address</td>
+</tr>
+</tbody>
+</table>
+<p>DNS changes can take a few minutes to an hour.</p>
+<h3 id="62-connect-to-the-server">6.2 Connect to the server</h3>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> root@YOUR_SERVER_IP</span></code></pre></div>
+<p>(Windows: use the built-in <code>ssh</code> in PowerShell, or
+PuTTY.)</p>
+<h3 id="63-install-the-basics-firewall-and-swap">6.3 Install the basics,
+firewall and swap</h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt</span> <span class="at">-y</span> upgrade</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> <span class="at">-y</span> install curl unzip sqlite3 ufw ca-certificates gnupg</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ex">ufw</span> allow OpenSSH</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="ex">ufw</span> allow 80</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="ex">ufw</span> allow 443</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="ex">ufw</span> <span class="at">--force</span> enable</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2 GB swap (helps small servers when building)</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="ex">fallocate</span> <span class="at">-l</span> 2G /swapfile <span class="kw">&amp;&amp;</span> <span class="fu">chmod</span> 600 /swapfile <span class="kw">&amp;&amp;</span> <span class="ex">mkswap</span> /swapfile <span class="kw">&amp;&amp;</span> <span class="ex">swapon</span> /swapfile</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;/swapfile none swap sw 0 0&#39;</span> <span class="op">&gt;&gt;</span> /etc/fstab</span></code></pre></div>
+<h3 id="64-install-nodejs-22-and-pm2">6.4 Install Node.js 22 and
+PM2</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsSL</span> https://deb.nodesource.com/setup_22.x <span class="kw">|</span> <span class="fu">bash</span> <span class="at">-</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> <span class="at">-y</span> install nodejs</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ex">node</span> <span class="at">-v</span>            <span class="co"># must show v22.13 or newer</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> pm2</span></code></pre></div>
+<h3 id="65-create-a-user-for-the-app">6.5 Create a user for the app</h3>
+<p>Running the app as a normal user (not root) is safer.</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">adduser</span> <span class="at">--disabled-password</span> <span class="at">--gecos</span> <span class="st">&quot;&quot;</span> app</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /home/app/data /home/app/backups</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">chown</span> <span class="at">-R</span> app:app /home/app</span></code></pre></div>
+<h3 id="66-upload-the-files">6.6 Upload the files</h3>
+<p>From <strong>your computer</strong>, upload the zip (or use FileZilla
+/ WinSCP with SFTP to <code>/home/app/</code>):</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> wallet-billing.zip root@YOUR_SERVER_IP:/home/app/</span></code></pre></div>
+<p>Then on the server:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/app</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span> wallet-billing.zip</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">chown</span> <span class="at">-R</span> app:app /home/app/wallet-billing</span></code></pre></div>
+<h3 id="67-create-the-settings-file">6.7 Create the settings file</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">su</span> <span class="at">-</span> app</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/backend</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> .env.example .env</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> 600 .env</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rand <span class="at">-hex</span> 24     <span class="co"># run twice: one value for ADMIN_KEY, one for SERVICE_API_KEY</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> .env</span></code></pre></div>
+<p>Set at least these values (save in nano with <code>Ctrl+O</code>,
+<code>Enter</code>, exit with <code>Ctrl+X</code>):</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode ini"><code class="sourceCode ini"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="dt">SERVICE_NAME</span><span class="ot">=</span><span class="st">Your Business Name</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="dt">CHAINS</span><span class="ot">=</span><span class="st">bsc</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="dt">ADMIN_KEY</span><span class="ot">=</span><span class="st">&lt;first random value&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="dt">SERVICE_API_KEY</span><span class="ot">=</span><span class="st">&lt;second random value&gt;</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="dt">TREASURY_WALLET</span><span class="ot">=</span><span class="st">0xYourTreasury</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="dt">UNIT_NAME</span><span class="ot">=</span><span class="st">credits</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="dt">PRICE_PER_UNIT</span><span class="ot">=</span><span class="fl">0.002</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="dt">DB_PATH</span><span class="ot">=</span><span class="st">/home/app/data/billing.db</span></span></code></pre></div>
+<p>The contract addresses and keeper keys are added in <a
+href="#7-set-up-each-blockchain">step 7</a>.</p>
+<h3 id="68-install-and-build">6.8 Install and build</h3>
+<p>Still as user <code>app</code>:</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/backend <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/site    <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> run build</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/admin   <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> run build</span></code></pre></div>
+<h3 id="69-start-the-app-and-keep-it-running">6.9 Start the app and keep
+it running</h3>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/backend</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pm2</span> start npm <span class="at">--name</span> billing <span class="at">--</span> start</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">pm2</span> save</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>                     <span class="co"># back to root</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span> PATH=<span class="va">$PATH</span>:/usr/bin pm2 startup systemd <span class="at">-u</span> app <span class="at">--hp</span> /home/app</span></code></pre></div>
+<p>The app now starts automatically after a reboot. Check it:
+<code>curl http://localhost:3001/api/health</code>.</p>
+<h3 id="610-https-with-caddy">6.10 HTTPS with Caddy</h3>
+<p>Caddy gets and renews the SSL certificate automatically.</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> <span class="at">-y</span> install debian-keyring debian-archive-keyring apt-transport-https</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-1sLf</span> <span class="st">&#39;https://dl.cloudsmith.io/public/caddy/stable/gpg.key&#39;</span> <span class="kw">|</span> <span class="ex">gpg</span> <span class="at">--dearmor</span> <span class="at">-o</span> /usr/share/keyrings/caddy-stable-archive-keyring.gpg</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-1sLf</span> <span class="st">&#39;https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt&#39;</span> <span class="kw">|</span> <span class="fu">tee</span> /etc/apt/sources.list.d/caddy-stable.list</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt</span> <span class="at">-y</span> install caddy</span></code></pre></div>
+<p>Replace the contents of <code>/etc/caddy/Caddyfile</code>
+(<code>nano /etc/caddy/Caddyfile</code>) with:</p>
+<pre><code>billing.yourdomain.com {
+    encode gzip
+    reverse_proxy localhost:3001
+}</code></pre>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">systemctl</span> reload caddy</span></code></pre></div>
+<p>Open <code>https://billing.yourdomain.com/api/health</code>. Then
+<code>https://billing.yourdomain.com/admin/</code> and log in with your
+<code>ADMIN_KEY</code>.</p>
+<details>
+<summary>Prefer Nginx? (alternative to Caddy)</summary>
+
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apt</span> <span class="at">-y</span> install nginx certbot python3-certbot-nginx</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> /etc/nginx/sites-available/billing <span class="op">&lt;&lt;&#39;EOF&#39;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="st">server {</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="st">    server_name billing.yourdomain.com;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="st">    location / {</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="st">        proxy_pass http://127.0.0.1:3001;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="st">        proxy_set_header Host $host;</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="st">        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="st">        proxy_set_header X-Forwarded-Proto $scheme;</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="st">    }</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ln</span> <span class="at">-s</span> /etc/nginx/sites-available/billing /etc/nginx/sites-enabled/</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="ex">nginx</span> <span class="at">-t</span> <span class="kw">&amp;&amp;</span> <span class="ex">systemctl</span> reload nginx</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="ex">certbot</span> <span class="at">--nginx</span> <span class="at">-d</span> billing.yourdomain.com</span></code></pre></div>
+</details>
+
+<h3 id="611-next-steps">6.11 Next steps</h3>
+<ol type="1">
+<li><a href="#7-set-up-each-blockchain">Set up each blockchain</a> on
+the Deploy page.</li>
+<li>Connect <a
+href="#10-telegram-alerts-and-telegram-control">Telegram</a>.</li>
+<li>Run the <a href="#8-test-before-going-live">tests</a> with small
+amounts.</li>
+<li>Turn on <a href="#15-backups-updates-and-monitoring">daily
+backups</a>.</li>
+</ol>
+<hr />
+<h2 id="7-set-up-bnb-smart-chain">7. Set up BNB Smart Chain</h2>
+<ol type="1">
+<li>Open <code>https://billing.yourdomain.com/admin/deploy.html</code>
+on a <strong>desktop browser</strong> with MetaMask installed.</li>
+<li>In MetaMask select your <strong>owner</strong> account (with ~0.01
+BNB) → <strong>Connect MetaMask</strong> → switch to BNB Smart Chain if
+asked.</li>
+<li><strong>Create a new keeper wallet</strong>. Copy the private key
+into a password manager and tick "I saved the private key".</li>
+<li>Check the <strong>treasury</strong> address.</li>
+<li><strong>Deploy contract</strong> → confirm in MetaMask. Check Owner,
+Token, Treasury and Keeper in the result.</li>
+<li><strong>Send to keeper</strong>: a little BNB for charge fees.</li>
+<li><strong>Copy all</strong> → paste into <code>backend/.env</code>
+(<code>BILLING_CONTRACT_BSC</code>,
+<code>BILLING_START_BLOCK_BSC</code>, <code>KEEPER_PRIVATE_KEY</code>) →
+restart (<code>pm2 restart billing</code> as user <code>app</code>, or
+redeploy on Render).</li>
+<li>Admin panel → <strong>Billing</strong>: the card should show
+<strong>Running</strong>, the keeper's BNB balance and no red
+messages.</li>
+</ol>
+<p><strong>Verify the contract on BscScan</strong> (lowers wallet
+warnings): Contract → Verify and Publish → Solidity (Single file),
+compiler <strong>v0.8.26+commit.8a97fa7a</strong>, license
+<strong>MIT</strong>, optimization <strong>Yes / 200 runs</strong>, EVM
+version <strong>paris</strong>, source
+<code>contracts/TokenBilling.sol</code>, constructor arguments as shown
+on the Deploy page.</p>
+<blockquote>
+<p><strong>Installing for a client?</strong> Set the client's wallet as
+treasury, deploy, then use <strong>Transfer ownership</strong> on the
+Deploy page so the client owns the contract.</p>
+</blockquote>
+<hr />
+<h2 id="8-test-before-going-live">8. Test before going live</h2>
+<p>From a second wallet with about 5 USDT and a little BNB:</p>
+<ol type="1">
+<li>Open the billing page inside Trust Wallet (or Binance Web3 Wallet) →
+<strong>Approve USDT and start</strong> (one confirmation) →
+<strong>Create API key</strong>.</li>
+<li>Admin → <strong>Record usage</strong> worth 1 USDT →
+<strong>Charge</strong> → status <strong>paid</strong>, 1 USDT arrives
+in the treasury.</li>
+<li>Test your API key:
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> POST https://billing.yourdomain.com/api/service/check <span class="dt">\</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;x-service-key: YOUR_SERVICE_API_KEY&quot;</span> <span class="at">-H</span> <span class="st">&quot;content-type: application/json&quot;</span> <span class="dt">\</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;apiKey&quot;:&quot;sk_...&quot;}&#39;</span></span></code></pre></div></li>
+<li>Revoke the approval (revoke.cash or <strong>Cancel billing</strong>
+on the page). Within a minute the admin shows "approval revoked" /
+"cancelled" and <code>check</code> returns <code>ok: false</code>.</li>
+<li>Deploy page → <strong>Pause all billing</strong> → a charge fails
+with "paused" → <strong>Unpause</strong>.</li>
+</ol>
+<p>Free test network: set <code>CHAINS=bsc-testnet</code> and
+<code>TOKEN_ADDRESS_BSC_TESTNET=</code> your MockUSDT
+(<code>contracts/MockUSDT.sol</code>), with test BNB from the BNB Chain
+faucet.</p>
+<hr />
+<h2 id="9-daily-use-the-admin-panel">9. Daily use: the admin panel</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Section</th>
+<th>What you do there</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Withdraw page (separate, <code>admin/withdraw.html</code>)</td>
+<td>For staff: approved customers, approved amount, available balance,
+usage, due, <strong>Withdraw</strong>. Own password
+<code>WITHDRAW_KEY</code></td>
+</tr>
+<tr class="even">
+<td>Network cards</td>
+<td>Connection, token, contract, Running / Paused, keeper gas, problems
+in red</td>
+</tr>
+<tr class="odd">
+<td>Telegram</td>
+<td>Bot token, chat, which alerts to send, bot commands on/off, extra
+admins</td>
+</tr>
+<tr class="even">
+<td>Record usage</td>
+<td>Add usage by hand for a customer; <strong>Add customer</strong> by
+network + wallet address</td>
+</tr>
+<tr class="odd">
+<td>Billing settings</td>
+<td>Price per unit, default limits, minimum approval</td>
+</tr>
+<tr class="even">
+<td>Customers</td>
+<td>Per network + wallet: status, limits, approved, balance, used,
+<strong>due</strong>, <strong>can charge now</strong>, <strong>credit
+left</strong>, <strong>Charge</strong>, <strong>Block</strong></td>
+</tr>
+<tr class="odd">
+<td>Charges</td>
+<td>History with network, amount, status (pending, sent, paid, failed),
+transaction link and error</td>
+</tr>
+</tbody>
+</table>
+<h3 id="withdraw-page-staff">Withdraw page (staff)</h3>
+<p><code>https://billing.yourdomain.com/admin/withdraw.html</code>,
+password <code>WITHDRAW_KEY</code> (the installer creates one; the admin
+key works there too). For the person who collects money without touching
+anything else:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Customer</td>
+<td><code>#id</code>, wallet (explorer link), label;
+<strong>History</strong> (usage and withdrawals) and <strong>+
+usage</strong> (record units used)</td>
+</tr>
+<tr class="even">
+<td>Approved / Available balance</td>
+<td>The customer's approval and current token balance on-chain</td>
+</tr>
+<tr class="odd">
+<td>Used / Due</td>
+<td>Units used and their cost; what is still due after what was
+paid</td>
+</tr>
+<tr class="even">
+<td>Can withdraw</td>
+<td>What can be collected now: the due amount, within the approval,
+balance and the customer's limits</td>
+</tr>
+<tr class="odd">
+<td>Withdraw</td>
+<td>Collects that amount (or a smaller one you type) into the treasury,
+with a confirmation</td>
+</tr>
+</tbody>
+</table>
+<p>Everything else (settings, Deploy page, Telegram, blocking) needs the
+admin key.</p>
+<p><strong>How often to charge?</strong> Your choice: daily, weekly, or
+when the due amount passes a threshold. Frequent, small charges stay
+under customers' per-charge limits and reduce the risk of a customer
+emptying the wallet first.</p>
+<hr />
+<h2 id="10-telegram-alerts-and-telegram-control">10. Telegram alerts and
+Telegram control</h2>
+<h3 id="connect-the-bot">Connect the bot</h3>
+<ol type="1">
+<li>In Telegram open <strong>@BotFather</strong> → <code>/newbot</code>
+→ copy the token.</li>
+<li>Admin → <strong>Telegram alerts</strong> → paste the token →
+<strong>Save</strong>.</li>
+<li>Open your bot and press <strong>Start</strong> (or add it to a group
+and send a message).</li>
+<li><strong>Find my chat</strong> → <strong>Send test</strong>.</li>
+<li>Choose which alerts to send: wallet connected, approval given /
+changed / revoked, billing activated / limits changed / cancelled,
+charge paid / failed, customer out of credit, network down / keeper low
+on gas.</li>
+</ol>
+<h3 id="manage-billing-from-the-bot">Manage billing from the bot</h3>
+<p>Send <code>/start</code> to the bot for a menu with buttons. The same
+actions work as commands:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Command</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>/status</code></td>
+<td>Network (connected, keeper gas), customers, usage and money
+collected</td>
+</tr>
+<tr class="even">
+<td><code>/customers</code></td>
+<td>Customer list; tap one for details and actions</td>
+</tr>
+<tr class="odd">
+<td><code>/find text</code> (or just type it)</td>
+<td>Search by <code>#id</code>, address (or part of it), label or
+email</td>
+</tr>
+<tr class="even">
+<td><code>/user who</code></td>
+<td>Full customer info</td>
+</tr>
+<tr class="odd">
+<td><code>/usage who units [note]</code></td>
+<td>Record usage, e.g. <code>/usage #12 1500 March posts</code></td>
+</tr>
+<tr class="even">
+<td><code>/charge who [amount]</code></td>
+<td>Charge now (asks for confirmation first)</td>
+</tr>
+<tr class="odd">
+<td><code>/chargeall</code></td>
+<td>Charge everyone who owes and can pay (asks for confirmation)</td>
+</tr>
+<tr class="even">
+<td><code>/block who</code>, <code>/unblock who</code>,
+<code>/label who text</code></td>
+<td>Stop / allow a customer's API key; name a customer</td>
+</tr>
+<tr class="odd">
+<td><code>/add chain wallet</code></td>
+<td>Add a customer who approved but isn't listed</td>
+</tr>
+<tr class="even">
+<td><code>/charges</code>, <code>/settings</code>,
+<code>/set price 0.002</code></td>
+<td>Recent charges; settings (<code>price</code>, <code>price1k</code>,
+<code>approve</code>, <code>percharge</code>, <code>per30</code>,
+<code>minapproval</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>/id</code>, <code>/cancel</code>, <code>/help</code></td>
+<td>Show your IDs; cancel a question; help</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Withdraw-only users.</strong> User IDs in
+<code>TELEGRAM_WITHDRAW_IDS</code> (or the admin panel → Telegram →
+"Withdraw-only user IDs") get a reduced bot: <code>/withdraw</code>
+(approved customers with approved amount, balance, usage and due),
+<code>/user</code>, <code>/charge</code> with confirmation, and history.
+Settings, charge-all, blocking, adding customers and status are not
+available to them.</p>
+<p><strong>Who can use the bot:</strong> only the chat saved as Chat ID
+(in a group: only group admins), plus user IDs you add under
+<strong>Extra admin user IDs</strong> (or
+<code>TELEGRAM_ADMIN_IDS</code>). Everyone else only gets their own ID
+back. A charge can only be confirmed by the person who started it, and
+the confirmation expires after 5 minutes. Turn commands off with the
+checkbox or <code>TELEGRAM_COMMANDS=0</code>; alerts keep working.</p>
+<p>The bot uses long polling: no webhook or public URL needed. Run
+<strong>one</strong> server per bot token.</p>
+<hr />
+<h2 id="11-connect-your-own-service-api">11. Connect your own service
+(API)</h2>
+<p>Your backend calls these with the header
+<code>x-service-key: &lt;SERVICE_API_KEY&gt;</code>. Never call them
+from a browser.</p>
+<pre><code>POST /api/service/check   { &quot;apiKey&quot;: &quot;sk_...&quot; }      (or { &quot;wallet&quot;: &quot;0x...&quot; } for users who came back from the Activate button)
+ -&gt; { &quot;ok&quot;: true, &quot;account&quot;: &quot;bsc:0x...&quot;, &quot;chain&quot;: &quot;bsc&quot;, &quot;wallet&quot;: &quot;0x...&quot;, &quot;symbol&quot;: &quot;USDT&quot;,
+      &quot;creditLeft&quot;: &quot;18.50&quot;, &quot;tokensLeft&quot;: 9250, &quot;due&quot;: &quot;11.50&quot;, &quot;reason&quot;: null }
+
+POST /api/service/usage   { &quot;apiKey&quot;: &quot;sk_...&quot;, &quot;tokens&quot;: 1532, &quot;note&quot;: &quot;campaign #12&quot; }
+ -&gt; { &quot;cost&quot;: &quot;3.064&quot;, &quot;due&quot;: &quot;14.564&quot;, &quot;creditLeft&quot;: &quot;15.436&quot;, &quot;tokensLeft&quot;: 7718, &quot;stop&quot;: false }</code></pre>
+<p><code>tokens</code> and <code>tokensLeft</code> are counted in your
+own unit (<code>UNIT_NAME</code>).</p>
+<ol type="1">
+<li>Before serving a customer, call <code>check</code>. If
+<code>ok</code> is false, refuse and show <code>reason</code>.</li>
+<li>Never serve more than <code>tokensLeft</code> in one request.</li>
+<li>After serving, call <code>usage</code> with the real amount
+used.</li>
+<li>If <code>usage</code> returns <code>stop: true</code>, refuse the
+next request until the customer approves more or you charge.</li>
+</ol>
+<p>No coding yet? Record usage by hand in the admin panel (or with the
+Telegram bot) and charge from there.</p>
+<h3 id="all-routes">All routes</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Route</th>
+<th>Auth</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>GET /api/health</code></td>
+<td></td>
+<td>Server and network status</td>
+</tr>
+<tr class="even">
+<td><code>GET /api/config</code>,
+<code>GET /api/billing/config</code></td>
+<td></td>
+<td>Public settings</td>
+</tr>
+<tr class="odd">
+<td><code>GET /api/billing/wallet?chain=&amp;wallet=</code></td>
+<td></td>
+<td>A wallet's token balance, gas coin balance, approval and limits
+("Check balance")</td>
+</tr>
+<tr class="even">
+<td><code>POST /api/billing/login-tx</code>,
+<code>GET /api/billing/login-message</code>,
+<code>POST /api/billing/login</code></td>
+<td></td>
+<td>Customer sign-in (activation transaction or signed message)</td>
+</tr>
+<tr class="odd">
+<td><code>POST /api/billing/register</code>,
+<code>GET /api/billing/me</code>,
+<code>POST /api/billing/api-key</code></td>
+<td><code>Authorization: Bearer &lt;session&gt;</code></td>
+<td>Customer dashboard and API key</td>
+</tr>
+<tr class="even">
+<td><code>GET /api/embed/status?wallet=&amp;chain=</code></td>
+<td></td>
+<td>Is this wallet's billing on (<code>active</code>,
+<code>usable</code>, <code>reason</code>)? Used by the Activate button;
+any site may call it</td>
+</tr>
+<tr class="odd">
+<td><code>POST /api/billing/pay</code>
+<code>{wallet, chain, txHash}</code></td>
+<td></td>
+<td>Prepaid: verify the customer's transfer-to-treasury transaction and
+add the credit</td>
+</tr>
+<tr class="even">
+<td><code>POST /api/service/check</code>,
+<code>POST /api/service/usage</code></td>
+<td><code>x-service-key</code></td>
+<td>Your backend</td>
+</tr>
+<tr class="odd">
+<td><code>GET /api/admin/overview</code>,
+<code>GET /api/admin/billing</code></td>
+<td><code>x-admin-key</code></td>
+<td>Admin data</td>
+</tr>
+<tr class="even">
+<td><code>POST /api/admin/billing/usage</code>
+<code>{account, tokens, note?}</code></td>
+<td><code>x-admin-key</code></td>
+<td>Add usage (<code>account</code> =
+<code>&lt;chain&gt;:&lt;address&gt;</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>POST /api/admin/billing/charge</code>
+<code>{account, amount?}</code></td>
+<td><code>x-admin-key</code></td>
+<td>Charge (no amount = maximum possible now)</td>
+</tr>
+<tr class="even">
+<td><code>POST /api/admin/billing/settings</code>,
+<code>/add-customer</code>, <code>/account</code></td>
+<td><code>x-admin-key</code></td>
+<td>Settings, add a customer, label or block</td>
+</tr>
+<tr class="odd">
+<td><code>GET/POST /api/admin/telegram</code>,
+<code>/telegram/test</code>, <code>/telegram/find-chat</code></td>
+<td><code>x-admin-key</code></td>
+<td>Telegram</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="12-add-the-pay-button-to-your-own-react-website">12. Add the Pay
+button to your own React website</h2>
+<p>If you already have a website with its own Pay / Subscribe button,
+use <code>integrations/</code>. Your button then runs the whole setup
+(connect, approve, activate, sign in, API key) without the customer
+leaving your page.</p>
+<ol type="1">
+<li>Host the billing server on a subdomain (e.g.
+<code>billing.yourdomain.com</code>).</li>
+<li>In <code>backend/.env</code> set
+<code>ALLOWED_ORIGINS=https://www.yourdomain.com,https://yourdomain.com</code>
+and restart.</li>
+<li>In the React project: <code>npm install ethers</code>.</li>
+<li>Copy <code>integrations/react/</code> files into the project and
+call <code>activate({ chain })</code> from your button.</li>
+<li>Send the returned <code>apiKey</code> to your backend and store it
+on the user (see <code>integrations/server-example.js</code>).</li>
+</ol>
+<p>Full guide with code: <code>integrations/README.md</code>.</p>
+<h3 id="121-activate-button-for-any-website-no-react-no-build">12.1
+Activate button for any website (no React, no build)</h3>
+<p>Step-by-step for the website's developer, with server code in
+Node.js, PHP and Python:
+<strong><code>DEVELOPER-GUIDE.md</code></strong> (also
+<code>documentation/developer-guide.html</code>).</p>
+<p>Put this on the home page (or any page) of the other website, where
+the button should appear:</p>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span> <span class="er">data-wallet-billing</span> <span class="er">data-label</span><span class="ot">=</span><span class="st">&quot;Activate services&quot;</span><span class="dt">&gt;&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">script</span> <span class="er">src</span><span class="ot">=</span><span class="st">&quot;https://billing.yourdomain.com/embed.js&quot;</span> <span class="er">async</span><span class="dt">&gt;&lt;/</span><span class="kw">script</span><span class="dt">&gt;</span></span></code></pre></div>
+<ol type="1">
+<li>In <code>backend/.env</code> add that website to
+<code>ALLOWED_ORIGINS</code> (e.g.
+<code>ALLOWED_ORIGINS=https://www.yoursite.com,https://yoursite.com</code>)
+and restart. Only these sites get the customer back after
+approving.</li>
+<li>The customer taps <strong>Activate services</strong>, approves on
+the billing page (opened inside Trust Wallet / Binance Wallet / MetaMask
+as usual) and comes straight back to your page. The button then shows
+<strong>Services active</strong> with the wallet, or why it is paused
+(for example a limited approval in strict mode) with a link to fix
+it.</li>
+<li>Your page's code can listen for it:</li>
+</ol>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">script</span><span class="dt">&gt;</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">window</span><span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;walletbilling:active&#39;</span><span class="op">,</span> (e) <span class="kw">=&gt;</span> {</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// e.detail.wallet, e.detail.chain: send it to your server and store it on the logged-in user</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">window</span><span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;walletbilling:paused&#39;</span><span class="op">,</span> (e) <span class="kw">=&gt;</span> { <span class="co">/* e.detail.reason */</span> })<span class="op">;</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">script</span><span class="dt">&gt;</span></span></code></pre></div>
+<ol start="4" type="1">
+<li><strong>Before serving</strong>, your server checks the wallet with
+<code>POST /api/service/check { "wallet": "0x..." }</code> (header
+<code>x-service-key</code>), never trusting the page alone, then records
+usage with
+<code>POST /api/service/usage { "wallet": "0x...", "tokens": 1500 }</code>.</li>
+</ol>
+<p>Options on the div: <code>data-label</code>,
+<code>data-active-label</code>, <code>data-chain</code> (multi-network
+installs), <code>data-return</code> (page to come back to; default the
+current page), <code>data-theme="dark"</code>.
+<code>window.WalletBilling.wallet()</code> returns the remembered
+wallet, <code>.refresh()</code> checks again, <code>.reset()</code>
+forgets it.</p>
+<hr />
+<h2 id="13-configuration-reference-env">13. Configuration reference
+(.env)</h2>
+<p>Every setting is also explained in
+<code>backend/.env.example</code>.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Setting</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>SERVICE_NAME</code></td>
+<td>My Service</td>
+<td>Your name on the billing page and in Telegram</td>
+</tr>
+<tr class="even">
+<td><code>PORT</code></td>
+<td>3001</td>
+<td>Server port</td>
+</tr>
+<tr class="odd">
+<td><code>CHAINS</code></td>
+<td>bsc</td>
+<td><code>bsc</code> (or <code>bsc-testnet</code> for testing). Other
+networks are not part of this edition</td>
+</tr>
+<tr class="even">
+<td><code>BILLING_CONTRACT_BSC</code>,
+<code>BILLING_START_BLOCK_BSC</code></td>
+<td></td>
+<td>From the Deploy page</td>
+</tr>
+<tr class="odd">
+<td><code>KEEPER_PRIVATE_KEY</code></td>
+<td></td>
+<td>Keeper wallet key (from the Deploy page)</td>
+</tr>
+<tr class="even">
+<td><code>TREASURY_WALLET</code></td>
+<td></td>
+<td>Your treasury address (pre-filled on the Deploy page)</td>
+</tr>
+<tr class="odd">
+<td><code>RPC_URL_BSC</code></td>
+<td>public RPC</td>
+<td>Your own RPC for the server (recommended)</td>
+</tr>
+<tr class="even">
+<td><code>BROWSER_RPC_URL_BSC</code></td>
+<td><a
+href="https://bsc-dataseed.bnbchain.org">https://bsc-dataseed.bnbchain.org</a></td>
+<td>RPC the customer's browser uses to show balances. Public URL without
+a secret key</td>
+</tr>
+<tr class="odd">
+<td><code>BILLING_TOKEN_BSC</code></td>
+<td>USDT</td>
+<td><code>USDT</code> or <code>USDC</code> (BEP-20)</td>
+</tr>
+<tr class="even">
+<td><code>ADMIN_KEY</code></td>
+<td><strong>required</strong></td>
+<td>Admin password, 16+ characters</td>
+</tr>
+<tr class="odd">
+<td><code>SERVICE_API_KEY</code></td>
+<td></td>
+<td>Password your backend sends as <code>x-service-key</code></td>
+</tr>
+<tr class="even">
+<td><code>UNIT_NAME</code></td>
+<td>tokens</td>
+<td>What you bill for (credits, messages, leads…)</td>
+</tr>
+<tr class="odd">
+<td><code>PRICE_PER_UNIT</code></td>
+<td>0.000002</td>
+<td>Price of one unit in USDT. Also editable in the admin panel and the
+bot</td>
+</tr>
+<tr class="even">
+<td><code>APPROVE_MODE</code></td>
+<td>strict</td>
+<td><code>strict</code> = unlimited approval only, no customer limits (a
+wallet that approves less or sets own limits is paused until it approves
+in full). <code>unlimited</code> = unlimited by default, customers may
+add own limits. <code>capped</code> = customers approve
+<code>DEFAULT_APPROVE</code> (e.g. 100 USDT) with a Top up button; fewer
+wallet warnings</td>
+</tr>
+<tr class="odd">
+<td><code>DEFAULT_APPROVE</code>, <code>DEFAULT_MAX_PER_CHARGE</code>,
+<code>DEFAULT_MAX_PER_30_DAYS</code></td>
+<td>1000 / 50 / 200</td>
+<td>Pre-filled values (capped / unlimited modes)</td>
+</tr>
+<tr class="even">
+<td><code>MIN_APPROVAL</code></td>
+<td>0</td>
+<td>API keys stop working below this approval (0 = off)</td>
+</tr>
+<tr class="odd">
+<td><code>APPROVE_FROM_BALANCE</code></td>
+<td>0</td>
+<td>Capped mode: <code>1</code> = approve the wallet's own balance (read
+before connecting), a specific number per customer, never "unlimited".
+<code>APPROVE_MAX</code> caps it (0 = no cap)</td>
+</tr>
+<tr class="even">
+<td><code>MIN_BALANCE</code>, <code>MIN_BALANCE_MESSAGE</code></td>
+<td>0</td>
+<td>A wallet below <code>MIN_BALANCE</code> of the token sees the
+message instead of the Approve button ({symbol} = token). 0 = everyone
+can start</td>
+</tr>
+<tr class="odd">
+<td><code>PREPAID</code>, <code>PREPAID_AMOUNTS</code></td>
+<td>0</td>
+<td><code>PREPAID=1</code> = no approval: the customer pays up front
+with a normal transfer (no contract or keeper needed); usage draws it
+down. <code>PREPAID_AMOUNTS</code> sets the quick-pick amounts</td>
+</tr>
+<tr class="even">
+<td><code>QUICK_SETUP</code></td>
+<td>1</td>
+<td>Quick setup page (balance at once, one Approve button)</td>
+</tr>
+<tr class="odd">
+<td><code>ALLOWED_ORIGINS</code></td>
+<td></td>
+<td>Websites that use the React integration or the Activate button
+(<code>embed.js</code>), comma-separated</td>
+</tr>
+<tr class="even">
+<td><code>GAS_DROP</code></td>
+<td>1</td>
+<td>Gas drop on/off</td>
+</tr>
+<tr class="odd">
+<td><code>GAS_DROP_AMOUNT_BSC</code></td>
+<td>auto</td>
+<td>Gas drop size in BNB (<code>auto</code> = enough for one
+transaction, at least 0.00007 BNB). The keeper must keep at least 0.0005
+BNB above it, or drops pause and Telegram warns you</td>
+</tr>
+<tr class="even">
+<td><code>GAS_DROP_MIN_TOKEN</code>, <code>GAS_DROP_PER_WALLET</code>,
+<code>GAS_DROP_DAILY_MAX</code></td>
+<td>0 / 3 / 50</td>
+<td>Minimum USDT for a drop (0 = none); most drops per wallet (a minute
+apart, none once billing is active); most drops per day</td>
+</tr>
+<tr class="odd">
+<td><code>WITHDRAW_KEY</code></td>
+<td></td>
+<td>Staff password for the Withdraw page. At least 12 characters,
+different from <code>ADMIN_KEY</code></td>
+</tr>
+<tr class="even">
+<td><code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code></td>
+<td></td>
+<td>Telegram (or set in the admin panel)</td>
+</tr>
+<tr class="odd">
+<td><code>TELEGRAM_ADMIN_IDS</code>, <code>TELEGRAM_WITHDRAW_IDS</code>,
+<code>TELEGRAM_COMMANDS</code></td>
+<td></td>
+<td>Extra bot admins, withdraw-only users; <code>0</code> = alerts
+only</td>
+</tr>
+<tr class="even">
+<td><code>REOWN_PROJECT_ID</code></td>
+<td></td>
+<td>Optional WalletConnect QR on the billing page (free ID from
+Reown)</td>
+</tr>
+<tr class="odd">
+<td><code>DB_PATH</code></td>
+<td>backend/billing.db</td>
+<td>Database file location</td>
+</tr>
+<tr class="even">
+<td><code>TRUST_PROXY</code></td>
+<td>1</td>
+<td>Number of proxies in front (Caddy / Nginx = 1)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="14-customization">14. Customization</h2>
+<table>
+<thead>
+<tr class="header">
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Business name</td>
+<td><code>SERVICE_NAME</code> in <code>.env</code></td>
+</tr>
+<tr class="even">
+<td>Unit name and price</td>
+<td><code>UNIT_NAME</code>, <code>PRICE_PER_UNIT</code> in
+<code>.env</code>, or admin → Billing settings</td>
+</tr>
+<tr class="odd">
+<td>Logo / app icon</td>
+<td>Replace <code>site/public/icon*.png</code> (keep the sizes) and the
+names in <code>site/public/manifest.webmanifest</code></td>
+</tr>
+<tr class="even">
+<td>Colors and fonts</td>
+<td>CSS variables at the top of <code>site/src/style.css</code> and
+<code>admin/src/style.css</code></td>
+</tr>
+<tr class="odd">
+<td>Page texts</td>
+<td><code>site/index.html</code> and <code>site/src/app.js</code></td>
+</tr>
+</tbody>
+</table>
+<p>Rebuild after front-end changes: <code>npm run build</code> in
+<code>site/</code> and/or <code>admin/</code>, then
+<code>pm2 restart billing</code>.</p>
+<p><strong>dApp mode:</strong> inside a wallet app's browser on a phone,
+on an <code>app.</code> / <code>dapp.</code> subdomain, or with
+<code>?dapp=1</code>, the billing page connects the wallet automatically
+and uses a compact layout. Customers can also add the page to their home
+screen.</p>
+<hr />
+<h2 id="15-backups-updates-and-monitoring">15. Backups, updates and
+monitoring</h2>
+<p><strong>Daily database backup</strong> (as user <code>app</code>:
+<code>crontab -e</code>, add one line):</p>
+<pre><code>15 3 * * * sqlite3 /home/app/data/billing.db &quot;.backup &#39;/home/app/backups/billing-$(date +\%F).db&#39;&quot; &amp;&amp; find /home/app/backups -mtime +14 -delete</code></pre>
+<p>Download a backup now and then
+(<code>scp app@YOUR_SERVER_IP:/home/app/backups/*.db .</code>).</p>
+<p><strong>Update to a new version:</strong> easiest is
+<code>sudo bash install.sh --update</code> from the new version's folder
+(see 6.0). Manually: back up the database, upload the new files over the
+old ones (keep <code>backend/.env</code>), then as user
+<code>app</code>:</p>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/backend <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/site <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> run build</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/wallet-billing/admin <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> install <span class="kw">&amp;&amp;</span> <span class="ex">npm</span> run build</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="ex">pm2</span> restart billing</span></code></pre></div>
+<p><strong>Useful commands</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th>Command</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pm2 status</code></td>
+<td>Is the app running</td>
+</tr>
+<tr class="even">
+<td><code>pm2 logs billing</code></td>
+<td>Live logs (charges, errors, Telegram bot actions)</td>
+</tr>
+<tr class="odd">
+<td><code>pm2 restart billing</code></td>
+<td>Restart after changes</td>
+</tr>
+<tr class="even">
+<td><code>systemctl status caddy</code></td>
+<td>HTTPS proxy status</td>
+</tr>
+</tbody>
+</table>
+<p>Add an uptime monitor (any free service) on
+<code>https://billing.yourdomain.com/api/health</code>.</p>
+<hr />
+<h2 id="16-security">16. Security</h2>
+<ul>
+<li>Never type a seed phrase anywhere except in the wallet app
+itself.</li>
+<li>Only the keeper key is on the server, holding a little BNB. Owner
+and treasury keys stay in your own wallets.</li>
+<li><code>backend/.env</code> must stay private
+(<code>chmod 600</code>), out of Git, zips and chats. Use long random
+values for <code>ADMIN_KEY</code>, <code>SERVICE_API_KEY</code> and
+<code>WITHDRAW_KEY</code>.</li>
+<li><strong>Keeper leaked?</strong> Deploy page → <strong>Pause all
+billing</strong> → create a new keeper → <strong>Change keeper</strong>
+→ update <code>.env</code> → restart → unpause. The contract only ever
+pays the treasury, so a leaked keeper cannot send customers' USDT
+anywhere else; this is also why unlimited approvals
+(<code>APPROVE_MODE=strict</code>) are safe from a leaked keeper.</li>
+<li><strong>Gas drop</strong> spends the keeper's BNB: at most
+<code>GAS_DROP_PER_WALLET</code> times per wallet (never once billing is
+active), only for wallets holding at least
+<code>GAS_DROP_MIN_TOKEN</code>, at most <code>GAS_DROP_DAILY_MAX</code>
+per day, rate-limited per IP, never when the keeper itself is low.
+<code>GAS_DROP=0</code> turns it off.</li>
+<li><strong>Activate button:</strong> customers are only sent back to
+sites listed in <code>ALLOWED_ORIGINS</code>. The wallet the button
+returns can be typed by anyone: your server always checks it with
+<code>/api/service/check</code> before serving.</li>
+<li><strong>Wallet risk warnings</strong> (Binance Web3 Wallet, Trust
+Wallet) come from the wallet's own scanner. Unlimited approvals are
+flagged most; <code>APPROVE_MODE=capped</code> avoids that. Also: verify
+the contract on BscScan, use a domain with HTTPS and some history, list
+the site on BNB Chain <strong>DappBay</strong>, and use the scanner's
+false-positive form if still flagged.</li>
+<li>Telegram: only trusted people should be bot admins; turn on Telegram
+two-step verification.</li>
+<li>Use an SSH key to log in to the VPS, keep the server updated, and
+back up the database daily.</li>
+<li>Have the contract reviewed by an experienced Solidity developer
+before large volumes. A deployed contract cannot be changed.</li>
+<li>Payment, consumer and tax rules differ by country. Check what
+applies to your business.</li>
+</ul>
+<hr />
+<h2 id="17-troubleshooting">17. Troubleshooting</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Problem</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Server exits with a message about <code>ADMIN_KEY</code></td>
+<td>Use 16+ characters, not starting with "change-this".</td>
+</tr>
+<tr class="even">
+<td><code>node:sqlite</code> or syntax errors on start</td>
+<td>Node is older than 22.13. Install Node 22 or 24.</td>
+</tr>
+<tr class="odd">
+<td><code>/api/health</code> shows a network "not connected"</td>
+<td>Leave <code>RPC_URL_BSC</code> empty to test the public RPC, or use
+a plain RPC URL (e.g. <a
+href="https://bsc-dataseed.bnbchain.org">https://bsc-dataseed.bnbchain.org</a>).</td>
+</tr>
+<tr class="even">
+<td>The page only shows "billing API is running"</td>
+<td>The front end isn't built: <code>npm run build</code> in
+<code>site/</code> and <code>admin/</code>, then restart.</td>
+</tr>
+<tr class="odd">
+<td>A network is missing on the billing page</td>
+<td>It isn't in <code>CHAINS</code>, its <code>.env</code> lines are
+missing, or the server wasn't restarted.</td>
+</tr>
+<tr class="even">
+<td>Wallet won't connect on the live site</td>
+<td>The site must use HTTPS. Check the Caddy / Nginx setup.</td>
+</tr>
+<tr class="odd">
+<td>React site: CORS error</td>
+<td>Add your exact origin to <code>ALLOWED_ORIGINS</code> (scheme +
+host, no trailing slash) and restart.</td>
+</tr>
+<tr class="even">
+<td>"KEEPER_PRIVATE_KEY belongs to …, but the contract's keeper is
+…"</td>
+<td>Deploy page → open the contract → <strong>Change keeper</strong>, or
+put the right key in <code>.env</code>.</td>
+</tr>
+<tr class="odd">
+<td>Deploy page shows a wallet error</td>
+<td>Read the message: usually not enough gas, wrong network in the
+wallet, or a busy wallet RPC (change the network's RPC in
+MetaMask).</td>
+</tr>
+<tr class="even">
+<td>Charge failed: over per-charge / 30-day limit</td>
+<td>The customer's own limits. Charge less or later.</td>
+</tr>
+<tr class="odd">
+<td>Charge failed: token transfer failed</td>
+<td>The customer's balance or approval is too low.</td>
+</tr>
+<tr class="even">
+<td>Charge failed: insufficient funds / not enough energy</td>
+<td>Send gas (BNB, POL, ETH, TRX or SOL) to that network's keeper.</td>
+</tr>
+<tr class="odd">
+<td>A new customer isn't listed</td>
+<td>Wait a minute, or <strong>Add customer</strong> with the wallet
+address.</td>
+</tr>
+<tr class="even">
+<td>Telegram test fails</td>
+<td>Check the token, press Start in the bot, <strong>Find my
+chat</strong> again.</td>
+</tr>
+<tr class="odd">
+<td>Bot says "This bot is private"</td>
+<td>Your chat isn't the saved Chat ID: <strong>Find my chat</strong>, or
+add your user ID (<code>/id</code>) as an extra admin.</td>
+</tr>
+<tr class="even">
+<td>Bot doesn't answer</td>
+<td>Admin → Telegram shows the bot status. "Conflict" = another server
+or a webhook uses the same token.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="18-faq">18. FAQ</h2>
+<p><strong>Can customers pay from an exchange account?</strong> No.
+Autopay needs an approval signed from a self-custody wallet (Trust
+Wallet, Binance Web3 Wallet, MetaMask…). Exchange accounts can't approve
+contracts.</p>
+<p><strong>Trust Wallet opens on Ethereum. Do customers have to
+switch?</strong> No. The page moves the wallet to BNB Smart Chain as
+soon as it opens, and the Approve button checks again before
+sending.</p>
+<p><strong>Is anything charged automatically?</strong> No. You start
+every charge (admin panel, Telegram, or your own scheduled call to the
+admin API).</p>
+<p><strong>Can I charge more than the customer approved?</strong> No.
+The contract refuses it.</p>
+<p><strong>Can a customer stop paying?</strong> Yes, at any time: cancel
+on the billing page or revoke the approval in the wallet. Your service
+then stops serving them (<code>check</code> returns
+<code>ok: false</code>), and unpaid usage stays as "due".</p>
+<p><strong>Do I need to run a blockchain node?</strong> No. Public RPCs
+work; your own RPC endpoint is recommended for reliability.</p>
+<hr />
+<h2 id="19-credits-and-licenses">19. Credits and licenses</h2>
+<p>Built with these open-source libraries, each under its own license
+(see <code>node_modules/&lt;package&gt;/LICENSE</code> after
+<code>npm install</code>):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Library</th>
+<th>License</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Express, ethers, Vite, wagmi, viem, TanStack Query, qrcode</td>
+<td>MIT</td>
+</tr>
+<tr class="even">
+<td>dotenv</td>
+<td>BSD-2-Clause</td>
+</tr>
+<tr class="odd">
+<td><strong>Reown AppKit</strong> (<code>@reown/appkit</code>, wallet
+connection on the billing page)</td>
+<td><strong>Reown Community License</strong> (not MIT)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reown AppKit notice.</strong> Portions © 2025 Reown, Inc. All
+Rights Reserved. AppKit is used under the Reown Community License
+(<code>site/node_modules/@reown/appkit/LICENSE.md</code> after
+installing). Free use has monthly limits (at the time of writing: 500
+monthly active users or 2,500,000 RPC calls); above them Reown requires
+a paid commercial license. Read the license before going live and keep
+this notice in your product.</p>
+<p>The Solidity contracts in <code>contracts/</code> are MIT licensed
+(see the SPDX header in each file).</p>
+<p>Fonts on the billing page (Bricolage Grotesque, Figtree) are loaded
+from Google Fonts under the SIL Open Font License.</p>
+<p><strong>Support:</strong> <em>add your support contact or support
+page here.</em></p>
+<a class="top" href="#contents">Top ↑</a>
+</main>
+</body>
+</html>

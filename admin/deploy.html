@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Deploy billing contract</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <header class="top admin-top">
+    <span class="wordmark">Deploy billing contract</span>
+    <div class="top-right">
+      <span class="net-pill" id="net-pill" hidden></span>
+      <a class="nav-link" href="./">Back to admin</a>
+    </div>
+  </header>
+
+  <main class="admin deploy">
+    <section class="panel">
+      <h2>Chain</h2>
+      <div class="chips" id="chain-pick"></div>
+      <p class="small" style="margin-top:8px">This edition runs on BNB Smart Chain only.</p>
+    </section>
+    <div id="other-panel" hidden></div>
+    <div id="evm-steps">
+    <p class="small intro">Deploys the TokenBilling contract from your own wallet (MetaMask). Your owner key never leaves the wallet. Open this page on a computer with the MetaMask extension, or inside the MetaMask app's browser.</p>
+
+    <section class="panel" id="step-wallet">
+      <h2><span class="num">1</span> Owner wallet</h2>
+      <div id="wallet-body"></div>
+    </section>
+
+    <section class="panel" id="step-keeper">
+      <h2><span class="num">2</span> Keeper wallet</h2>
+      <p class="small">The server uses this wallet only to trigger charges. It never holds customer money, so a new, separate wallet is safest.</p>
+      <div class="field">
+        <label for="keeper">Keeper address</label>
+        <input id="keeper" placeholder="0x..." spellcheck="false" autocomplete="off" />
+      </div>
+      <button class="btn btn-ghost" type="button" id="gen-keeper">Create a new keeper wallet</button>
+      <div id="keeper-secret"></div>
+    </section>
+
+    <section class="panel" id="step-treasury">
+      <h2><span class="num">3</span> Treasury (where payments go)</h2>
+      <div class="field">
+        <label for="treasury">Treasury address</label>
+        <input id="treasury" placeholder="0x..." spellcheck="false" autocomplete="off" />
+        <span class="hint">Defaults to TREASURY_WALLET from the server settings. The owner can change it later.</span>
+      </div>
+      <div class="field">
+        <label>Token</label>
+        <p id="token-line" class="mono"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="step-deploy">
+      <h2><span class="num">4</span> Deploy</h2>
+      <div id="deploy-body"></div>
+    </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="./src/deploy.js"></script>
+</body>
+</html>

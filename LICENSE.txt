@@ -1,0 +1,10 @@
+Wallet Billing
+Copyright (c) 2026 [YOUR NAME OR COMPANY]. All rights reserved.
+
+This item is licensed under the license you accepted when you purchased it
+(for example the Envato Market Regular or Extended License). It may not be
+redistributed or resold except as that license allows.
+
+Third-party components keep their own licenses. See README.md, section
+"Credits and licenses". The Solidity contracts in contracts/ are MIT licensed.
+Reown AppKit: Portions (c) 2025 Reown, Inc. All Rights Reserved.
